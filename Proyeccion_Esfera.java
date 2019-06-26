@@ -624,7 +624,7 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     new ImageJ();
     System.out.println("Working Directory = " + System.getProperty("user.dir"));
     //ImagePlus image = IJ.openVirtual("Z:/Eclipse/Fijithelium/examples/Stack/video_animal1.tif");
-    ImagePlus image = IJ.openVirtual("C:/Users/Alejandro/Desktop/EpitheliumProjection/examples/ejemplo_esfera.tif");
+    ImagePlus image = IJ.openVirtual("C:/Users/Alejandro/Desktop/java/epithelium-projection/examples/ejemplo_esfera.tif");
 
     IJ.runPlugIn(image, "Proyeccion_Esfera", "parameter=value");
     // image.show();
