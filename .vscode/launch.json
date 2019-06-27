@@ -1,0 +1,12 @@
+{
+  "configurations": [
+    {
+      "type": "java",
+      "name": "CodeLens (Launch) - Proyeccion_Esfera",
+      "request": "launch",
+      "mainClass": "Proyeccion_Esfera",
+      "classPaths": ["C:/Fiji.app/jars/ij-1.52n.jar", "."],
+      "args": ["./examples/ejemplo_esfera.tif"]
+    }
+  ]
+}
