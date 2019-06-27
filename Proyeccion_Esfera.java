@@ -310,7 +310,6 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
       ImagePlus impstack = new ImagePlus("MAX_stack_hermoso", stack_proyeccion);
       impstack.show();
     }
-      
     if (!preview && !kkk) {
       System.out.println("Si calculo todo sin el preview");
     }
@@ -352,7 +351,7 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
       double factorz = cal.pixelDepth; //z contains the pixel (voxel) depth in units
 
       img2.getProcessor().setAutoThreshold(AutoThresholder.Method.Otsu, true);
-        
+      
       double threshold = img2.getProcessor().getMinThreshold();
       double factor_otsu = Math.pow(2, (int) threshold/2)/((int) threshold/2 - 1);
                 
@@ -519,11 +518,10 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
             + Math.pow(((xx[2]-yy[2])*factorz),2)));
   }
   
+  // El metodo asume que los puntos no son todos coplanares
+  // y que estan aproximadamente en el borde
   public double[] sphere_estimation(double[] x, double[] y, double[] z, int contador, ImagePlus imp) {
-    
-    //El metodo asume que los puntos no son todos coplanares
-    //y que estan aproximadamente en el borde
-    
+
     Calibration cal = imp.getCalibration(); 
     double factorx = cal.pixelWidth; //x contains the pixel width in units 
     double factory = cal.pixelHeight; //y contains the pixel height in units 
@@ -531,33 +529,34 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
       
     double Lba = 0, Lbb = 0, Lbc = 0, Lb = 0;
     double xb = 0, yb = 0, zb = 0;
-    double a,b,c;
+    double a, b, c;
     double r = 0;
 
-    for (int j=0; j < contador; j++) {
+    for (int j = 0; j < contador; j++) {
       xb += x[j];
       yb += y[j];
       zb += z[j];
     }
 
     double[] Li = new double[contador];
-    xb = xb/contador;
-    yb = yb/contador; 
-    zb = zb/contador;
-    a = xb; b = yb; c = zb;
-    //IJ.showMessage("Numero de muestras tomadas:  "+ (int) contador);
+    xb = xb / contador;
+    yb = yb / contador; 
+    zb = zb / contador;
+    a = xb;
+    b = yb;
+    c = zb;
     
     for (int h = 1; h <= 300; h++) {
-      for (int i=0; i < contador; i++) {
-          Li[i] = Math.sqrt(Math.pow((x[i]-a)*factorx,2) + Math.pow((y[i]-b)*factory,2) + Math.pow((z[i]-c)*factorz,2));
-          Lba +=  (a-x[i])/(Li[i]*contador);
-          Lbb +=  (b-y[i])/(Li[i]*contador);
-          Lbc +=  (c-z[i])/(Li[i]*contador);
-          Lb += Li[i]/contador;
+      for (int i = 0; i < contador; i++) {
+          Li[i] = Math.sqrt(Math.pow((x[i] - a) * factorx, 2) + Math.pow((y[i] - b) * factory, 2) + Math.pow((z[i] - c) * factorz, 2));
+          Lba += (a - x[i]) / (Li[i] * contador);
+          Lbb += (b - y[i]) / (Li[i] * contador);
+          Lbc += (c - z[i]) / (Li[i] * contador);
+          Lb += Li[i] / contador;
       }
-      a = xb + Lb*Lba;
-      b = yb + Lb*Lbb;
-      c = zb + Lb*Lbc;
+      a = xb + Lb * Lba;
+      b = yb + Lb * Lbb;
+      c = zb + Lb * Lbc;
       Lba = 0;
       Lbb = 0;
       Lbc = 0;
@@ -565,11 +564,11 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     }
 
     for (int i=0; i < contador; i++) {
-      Li[i] = Math.sqrt(Math.pow((x[i]-a)*factorx,2) + Math.pow((y[i]-b)*factory,2) + Math.pow((z[i]-c)*factorz,2));
-      r += Li[i]/contador;
+      Li[i] = Math.sqrt(Math.pow((x[i] - a) * factorx, 2) + Math.pow((y[i] - b) * factory, 2) + Math.pow((z[i] - c) * factorz, 2));
+      r += Li[i] / contador;
     }
 
-    double[] q = {a,b,c,r};
+    double[] q = {a, b, c, r};
     return q;
   }
   
@@ -598,21 +597,21 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     
     for (int h = 1; h <= 300; h++) {
       for (int i=0; i < contador; i++) {
-          Li[i] = Math.sqrt(Math.pow((x[i]-a)*factorx,2) + Math.pow((y[i]-b)*factory,2));
-          Lba +=  (a-x[i])/(Li[i]*contador);
-          Lbb +=  (b-y[i])/(Li[i]*contador);
-          Lb += Li[i]/contador;
+          Li[i] = Math.sqrt(Math.pow((x[i] - a) * factorx, 2) + Math.pow((y[i] - b) * factory, 2));
+          Lba += (a - x[i]) / (Li[i] * contador);
+          Lbb += (b - y[i]) / (Li[i] * contador);
+          Lb += Li[i] / contador;
       }
-      a = xb + Lb*Lba;
-      b = yb + Lb*Lbb;
+      a = xb + Lb * Lba;
+      b = yb + Lb * Lbb;
       Lba = 0;
       Lbb = 0;
       Lb = 0;
     }
 
     for (int i=0; i < contador; i++) {
-      Li[i] = Math.sqrt(Math.pow((x[i]-a)*factorx,2) + Math.pow((y[i]-b)*factory,2));
-      r += Li[i]/contador;
+      Li[i] = Math.sqrt(Math.pow((x[i] - a) * factorx, 2) + Math.pow((y[i] - b) * factory, 2));
+      r += Li[i] / contador;
     }
 
     double[] q = {a,b,r};
