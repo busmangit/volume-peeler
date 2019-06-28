@@ -2,15 +2,12 @@ import ij.*;
 import ij.process.*;
 import ij.plugin.Duplicator;
 import ij.plugin.ZProjector;
-import ij.plugin.filter.Analyzer;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.measure.Calibration;
-import ij.measure.ResultsTable;
 
-import java.util.Vector;
 import java.awt.*;
 
 public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
@@ -82,11 +79,6 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     width = stack.getWidth(); //ancho de imagen
     height = stack.getHeight(); //alto de imagen
     
-    //stack auxiliar para guardar stack proyectado
-    imp.getProcessor().setAutoThreshold(AutoThresholder.Method.Otsu, true);
-    double threshold = imp.getProcessor().getMinThreshold();
-    int factor_otsu = (int)Math.pow(2, (int)threshold / 2) / ((int)threshold / 2 - 1);
-    
     //dimension de arreglos para guardar datos
     int dimension = width * height * zs / 15;
     
@@ -96,17 +88,20 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     double[] mz = new double[dimension];
     
     //circulo para z=0
-    int cnt = pixelesSobreUmbral(factor_otsu, 1, mx, my, mz);
+    imp.getProcessor().setAutoThreshold(AutoThresholder.Method.Otsu, true);
+    double threshold = imp.getProcessor().getMinThreshold();
+    int factor_otsu = (int)Math.pow(2, (int)threshold / 2) / ((int)threshold / 2 - 1);
+    int cnt = pixelsOverThreshold(factor_otsu, 1, mx, my, mz);
     
-    double[] datos = circle_estimation(mx, my, cnt, imp);
+    double[] datos = circleEstimation(mx, my, cnt, imp);
     x_z0_pre = datos[0];
     y_z0_pre = datos[1];
     r_z0_pre = datos[2];
 
     //circulo para z=zs
-    cnt = pixelesSobreUmbral(factor_otsu, zs, mx, my, mz);
+    cnt = pixelsOverThreshold(factor_otsu, zs, mx, my, mz);
     
-    datos = circle_estimation(mx, my, cnt, imp);
+    datos = circleEstimation(mx, my, cnt, imp);
     x_zs_pre = datos[0];
     y_zs_pre = datos[1];
     r_zs_pre = datos[2];
@@ -150,7 +145,13 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     return FLAGS;
   }
 
-  private int pixelesSobreUmbral(int umbral, int z, double[] cx, double[] cy, double[] cz) {
+  /** Listener to modifications of the input fields of the dialog.
+   *  Here the parameters should be read from the input dialog.
+   *  @param gd The GenericDialog that the input belongs to
+   *  @param e  The input event
+   *  @return whether the input is valid and the filter may be run with these parameters
+   */
+  private int pixelsOverThreshold(int umbral, int z, double[] cx, double[] cy, double[] cz) {
     byte[] pix_est = (byte[]) stack.getPixels(z);
     int cnt = 0;
     for (int i = 0; i < height; i++) {
@@ -335,7 +336,7 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
           }
       }
         
-      datos = circle_estimation(mx,my,cnt, imp);
+      datos = circleEstimation(mx,my,cnt, imp);
       x_z0 = datos[0];
       y_z0 = datos[1];
       r_z0 = datos[2];
@@ -355,7 +356,7 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
         }
       }
         
-      datos = circle_estimation(mx,my,cnt, imp);
+      datos = circleEstimation(mx,my,cnt, imp);
       x_zs = datos[0];
       y_zs = datos[1];
       r_zs = datos[2];
@@ -511,8 +512,26 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     return q;
   }
   
-  public double[] circle_estimation(double[] x, double[] y, int pointCount, ImagePlus imp) {
-    
+  public double[] circleEstimation(double[] x, double[] y, int nPoints, ImagePlus imp) {
+    double[] centroid = getCentroid(x, y, nPoints);
+    double a = centroid[0];
+    double b = centroid[1];
+    for (int iter = 0; iter < 300; iter++) {
+      double Lba = 0, Lbb = 0, Lb = 0, dist = 0;
+      for (int i = 0; i < nPoints; i++) {
+        dist = realDist(x[i] - a, y[i] - b);
+        Lba += (a - x[i]) / (dist * nPoints);
+        Lbb += (b - y[i]) / (dist * nPoints);
+        Lb += dist / nPoints;
+      }
+      a = centroid[0] + Lb * Lba;
+      b = centroid[1] + Lb * Lbb;
+    }
+    double r = getAverageDistance(x, y, nPoints, a, b);
+    return new double[] {a, b, r};
+  }
+
+  private double[] getCentroid(double[] x, double[] y, int pointCount) {
     double avgX = 0, avgY = 0;
     for (int j = 0; j < pointCount; j++) {
       avgX += x[j];
@@ -520,29 +539,15 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     }
     avgX /= pointCount;
     avgY /= pointCount;
+    return new double[] {avgX, avgY};
+  }
 
-    double[] Li = new double[pointCount];
-    double a = avgX;
-    double b = avgY;
-    final int iters = 300;
-    for (int iter = 1; iter <= iters; iter++) {
-      double Lba = 0, Lbb = 0, Lb = 0;
-      for (int i = 0; i < pointCount; i++) {
-        Li[i] = realDist(x[i] - a, y[i] - b);
-        Lba += (a - x[i]) / (Li[i] * pointCount);
-        Lbb += (b - y[i]) / (Li[i] * pointCount);
-        Lb += Li[i] / pointCount;
-      }
-      a = avgX + Lb * Lba;
-      b = avgY + Lb * Lbb;
-    }
-
+  private double getAverageDistance(double[] x, double[] y, int nPoints, double a, double b) {
     double r = 0;
-    for (int i = 0; i < pointCount; i++) {
-      Li[i] = realDist(x[i] - a, y[i] - b);
-      r += Li[i] / pointCount;
+    for (int i = 0; i < nPoints; i++) {
+      r += realDist(x[i] - a, y[i] - b);
     }
-    return new double[] {a, b, r};
+    return r / nPoints;
   }
 
   public static void main(String[] args) {
