@@ -17,27 +17,19 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
           DOES_ALL |              //this plugin processes 8-bit, 16-bit, 32-bit gray & 24-bit/pxl RGB
           KEEP_PREVIEW;           //When using preview, the preview image can be kept as a result
 
-  protected ImageStack stack;
+  private ImageStack stack;
   private double pelar;
   private boolean preview = false;
   private boolean kkk = false;
   private ImagePlus imp;
   
   private double x_z0_pre, y_z0_pre, x_zs_pre, y_zs_pre, r_z0_pre, r_zs_pre;
-  
-  private double xpre;
-  private double ypre;
-  private double zpre;
-  private double rpre;
-
+  private double xpre, ypre, zpre, rpre;
+  private double factorx, factory, factorz;
   private int width, height, zs, tiempos;
 
-  private double factorx;
-  private double factory;
-  private double factorz;
-
   private String direc;
-  private String imagedir;  
+  private String imagedir;
   
   /**
    * This method is called by ImageJ for initialization.
@@ -50,7 +42,19 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
    *            sources for details.
    */
   public int setup(String arg, ImagePlus imp) {
-      return FLAGS;
+    Calibration cal = imp.getCalibration(); 
+    factorx = cal.pixelWidth; //x contains the pixel width in units
+    factory = cal.pixelHeight; //y contains the pixel height in units
+    factorz = cal.pixelDepth; //z contains the pixel (voxel) depth in units
+    preview = true;
+    stack = imp.getStack();    
+    direc = imp.getOriginalFileInfo().directory;
+    imagedir = imp.getOriginalFileInfo().fileName;
+    tiempos = imp.getNFrames(); //tiempos a procesar
+    zs = stack.getSize() / tiempos; // numero de planos z
+    width = stack.getWidth(); //ancho de imagen
+    height = stack.getHeight(); //alto de imagen
+    return FLAGS;
   }
 
   /** Ask the user for the parameters. This method of an ExtendedPlugInFilter
@@ -63,65 +67,33 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
   public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
     System.out.println("FLAG para ShowDialog");
     
-    Calibration cal = imp.getCalibration(); 
-    factorx = cal.pixelWidth; //x contains the pixel width in units
-    factory = cal.pixelHeight; //y contains the pixel height in units
-    factorz = cal.pixelDepth; //z contains the pixel (voxel) depth in units
-
-    preview = true;
-    
-    stack = imp.getStack();    
-    direc = imp.getOriginalFileInfo().directory;
-    imagedir = imp.getOriginalFileInfo().fileName;
-    
-    tiempos = imp.getNFrames(); //tiempos a procesar
-    zs = stack.getSize() / tiempos; // numero de planos z
-    width = stack.getWidth(); //ancho de imagen
-    height = stack.getHeight(); //alto de imagen
-    
-    //dimension de arreglos para guardar datos
+    // arreglos para guardar datos para estimacion de la esfera
     int dimension = width * height * zs / 15;
-    
-    //arreglos para guardar datos para estimacion de la esfera
     double[] mx = new double[dimension];
     double[] my = new double[dimension];
     double[] mz = new double[dimension];
     
-    //circulo para z=0
+    // circulo para z=0
     imp.getProcessor().setAutoThreshold(AutoThresholder.Method.Otsu, true);
     double threshold = imp.getProcessor().getMinThreshold();
-    int factor_otsu = (int)Math.pow(2, (int)threshold / 2) / ((int)threshold / 2 - 1);
-    int cnt = pixelsOverThreshold(factor_otsu, 1, mx, my, mz);
-    
+    int otsuThresh = (int)Math.pow(2, (int)threshold / 2) / ((int)threshold / 2 - 1);
+    int cnt = pixelsOverThreshold(otsuThresh, 1, 0, mx, my, mz);
     double[] datos = circleEstimation(mx, my, cnt, imp);
     x_z0_pre = datos[0];
     y_z0_pre = datos[1];
     r_z0_pre = datos[2];
 
-    //circulo para z=zs
-    cnt = pixelsOverThreshold(factor_otsu, zs, mx, my, mz);
-    
+    // circulo para z=zs
+    cnt = pixelsOverThreshold(otsuThresh, zs, 0, mx, my, mz);
     datos = circleEstimation(mx, my, cnt, imp);
     x_zs_pre = datos[0];
     y_zs_pre = datos[1];
     r_zs_pre = datos[2];
-    cnt = 0;
     
     // estimar esfera
+    cnt = 0;
     for (int z = 1; z <= zs; z++) {
-      byte[] pix_est = (byte[]) stack.getPixels(z);
-      for (int i = 0; i < height; i++) {
-        int offsetaux = i * width;
-        for (int j = 0; j < width; j++) {
-          int pos = offsetaux + j;
-          if ((pix_est[pos]) > factor_otsu || pix_est[pos] < 0) {
-            mx[cnt] = j;
-            my[cnt] = i;
-            mz[cnt] = z - 1;
-            cnt += 1;
-          }
-        }
-      }
+      cnt += pixelsOverThreshold(otsuThresh, z, cnt, mx, my, mz);
     }
     
     datos = sphere_estimation(mx, my, mz, cnt, imp);
@@ -151,18 +123,18 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
    *  @param e  The input event
    *  @return whether the input is valid and the filter may be run with these parameters
    */
-  private int pixelsOverThreshold(int umbral, int z, double[] cx, double[] cy, double[] cz) {
+  private int pixelsOverThreshold(int thresh, int z, int offset, double[] cx, double[] cy, double[] cz) {
     byte[] pix_est = (byte[]) stack.getPixels(z);
     int cnt = 0;
     for (int i = 0; i < height; i++) {
       int offsetaux = i * width;
       for (int j = 0; j < width; j++) {
         int pos = offsetaux + j;
-        if (pix_est[pos] > umbral || pix_est[pos] < 0) {
+        if (pix_est[pos] > thresh || pix_est[pos] < 0) {
           cx[cnt] = j;
           cy[cnt] = i;
           cz[cnt] = z - 1;
-          cnt += 1;
+          cnt++;
         }
       }
     }
@@ -504,8 +476,7 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     }
 
     for (int i=0; i < contador; i++) {
-      Li[i] = realDist(x[i] - a, y[i] - b, z[i] - c);
-      r += Li[i] / contador;
+      r += realDist(x[i] - a, y[i] - b, z[i] - c) / contador;
     }
 
     double[] q = {a, b, c, r};
