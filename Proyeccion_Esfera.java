@@ -20,7 +20,7 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
   private ImageStack stack;
   private double pelar;
   private boolean preview = false;
-  private boolean kkk = false;
+  private boolean okPressed = false;
   private ImagePlus imp;
   
   private double x_z0_pre, y_z0_pre, x_zs_pre, y_zs_pre, r_z0_pre, r_zs_pre;
@@ -95,7 +95,6 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     for (int z = 1; z <= zs; z++) {
       cnt += pixelsOverThreshold(otsuThresh, z, cnt, mx, my, mz);
     }
-    
     datos = sphere_estimation(mx, my, mz, cnt, imp);
     xpre = datos[0];
     ypre = datos[1];
@@ -110,9 +109,7 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     if (gd.wasCanceled()) {
       return DONE;
     }
-    if (gd.wasOKed()) {
-      kkk = true;
-    }
+    okPressed = gd.wasOKed();
     preview = false;
     return FLAGS;
   }
@@ -123,17 +120,17 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
    *  @param e  The input event
    *  @return whether the input is valid and the filter may be run with these parameters
    */
-  private int pixelsOverThreshold(int thresh, int z, int offset, double[] cx, double[] cy, double[] cz) {
-    byte[] pix_est = (byte[]) stack.getPixels(z);
+  private int pixelsOverThreshold(int thresh, int slice, int offset, double[] x, double[] y, double[] z) {
+    byte[] slicePixels = (byte[]) stack.getPixels(slice);
     int cnt = 0;
     for (int i = 0; i < height; i++) {
       int offsetaux = i * width;
       for (int j = 0; j < width; j++) {
         int pos = offsetaux + j;
-        if (pix_est[pos] > thresh || pix_est[pos] < 0) {
-          cx[cnt] = j;
-          cy[cnt] = i;
-          cz[cnt] = z - 1;
+        if (slicePixels[pos] > thresh || slicePixels[pos] < 0) {
+          x[offset + cnt] = j;
+          y[offset + cnt] = i;
+          z[offset + cnt] = slice - 1;
           cnt++;
         }
       }
@@ -237,10 +234,10 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
       ImagePlus impstack = new ImagePlus("MAX_stack_hermoso", stack_proyeccion);
       impstack.show();
     }
-    if (!preview && !kkk) {
+    if (!preview && !okPressed) {
       System.out.println("Si calculo todo sin el preview");
     }
-    if (!preview && kkk) {
+    if (!preview && okPressed) {
       System.out.println("Si calculo todo sin el preview y con ok");
       
       imp = WindowManager.getCurrentImage(); 
