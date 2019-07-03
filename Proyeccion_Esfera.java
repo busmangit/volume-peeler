@@ -6,6 +6,7 @@ import ij.plugin.filter.PlugInFilterRunner;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.measure.Calibration;
+import java.util.HashMap;
 
 import java.awt.*;
 
@@ -23,6 +24,9 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
   private double pelar;
   private boolean preview = false;
   private boolean okPressed = false;
+  private boolean previewWindowInitialized = false;
+
+  private HashMap<Double, ColorProcessor> previewCache;
   
   private double x_z0_pre, y_z0_pre, x_zs_pre, y_zs_pre, r_z0_pre, r_zs_pre;
   private double xpre, ypre, zpre, rpre;
@@ -52,12 +56,13 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     this.height = source.getHeight(); //alto de imagen
     this.pixelsPerSlice = this.width * this.height;
     this.zs = source.getSize() / this.tiempos; // numero de planos z
+    this.previewCache = new HashMap<Double, ColorProcessor>();
 
-    this.sourcePixels = new byte[this.width * this.height * this.zs * this.tiempos];
+    this.sourcePixels = new byte[this.pixelsPerSlice * this.zs * this.tiempos];
     for (int z = 1; z <= zs; z++) {
       this.sourceImagePlus.setSlice(z);
       byte[] pixels = (byte[])this.sourceImagePlus.getProcessor().getPixelsCopy();
-      int zoffset = this.width * this.height * (z - 1);
+      int zoffset = this.pixelsPerSlice * (z - 1);
       for (int i = 0; i < height; i++) {
         int yoffset = i * width;
         for (int j = 0; j < width; j++) {
@@ -66,9 +71,9 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
       }
     }
 
-    this.sourceImagePlus.setSlice(1);
+    this.sourceImagePlus.setSlice(zs / 2);
     this.sourceImagePlus.getProcessor().setAutoThreshold(AutoThresholder.Method.Otsu, true);
-    double otsuThreshold = imp.getProcessor().getMinThreshold();
+    double otsuThreshold = this.sourceImagePlus.getProcessor().getMinThreshold();
     this.threshold = (int)Math.pow(2, (int)otsuThreshold / 2) / ((int)otsuThreshold / 2 - 1);
 
     runInitialEstimations(imp);
@@ -125,8 +130,8 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
    */
   public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
     System.out.println("FLAG para ShowDialog");
-    GenericDialog gd = new GenericDialog("Factor de corte");
-    gd.addSlider("Ingrese un numero entre 0 y 1", 0.0, 1.0, 0.94);
+    GenericDialog gd = new GenericDialog("Parámetros");
+    gd.addSlider("Factor de corte", 0.0, 1.0, 0.94);
     gd.addPreviewCheckbox(pfr);
     gd.addDialogListener(this);
     gd.showDialog();
@@ -144,7 +149,7 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
       int offsetaux = i * width;
       for (int j = 0; j < width; j++) {
         int pos = offsetaux + j;
-        if (this.sourcePixels[(slice - 1) * width * height + pos] > threshold || this.sourcePixels[(slice - 1) * width * height + pos] < 0) {
+        if (this.sourcePixels[(slice - 1) * this.pixelsPerSlice + pos] > threshold || this.sourcePixels[(slice - 1) * this.pixelsPerSlice + pos] < 0) {
           x[offset + cnt] = j;
           y[offset + cnt] = i;
           z[offset + cnt] = slice - 1;
@@ -175,12 +180,13 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     System.out.println("FLAG para RUN ");
     
     if (preview) {
-      System.out.println("Se calculara con este valor de pelado" + pelar);
-      System.out.println("Paso 1");
+
+      if (this.previewCache.containsKey(new Double(pelar))) {
+        IJ.getImage().setImage(new ImagePlus("Preview", this.previewCache.get(new Double(pelar))));
+        return;
+      }
+
       ImageStack stack_prev = new ImageStack(width, height, zs);
-
-      System.out.println("Paso 2");
-
       double radioAdmitido = pelar * rpre;
       for (int i = 0; i < this.sourcePixels.length; i += this.pixelsPerSlice) {
         byte[] slice = new byte[this.pixelsPerSlice];
@@ -190,43 +196,23 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
         }
         stack_prev.setPixels(slice, 1 + i / this.pixelsPerSlice);
       }
-      System.out.println("Valor pelar * rpre :" + pelar * rpre);
-      
-      System.out.println("Paso 3");
-      
-      ImagePlus histIm = new ImagePlus("Proyección", stack_prev); 
-      ZProjector projector = new ZProjector(histIm);
+
+      ZProjector projector = new ZProjector(new ImagePlus("Proyección", stack_prev));
       projector.setMethod(ZProjector.MAX_METHOD);
       projector.doProjection();
-      
-      //convertir a color para dibujar circunferencias
-      ImageProcessor proyeccion = projector.getProjection().getProcessor();
-      ColorProcessor ipc = proyeccion.convertToColorProcessor();
-      
-      //dibujar circulo de la aproximacion completa
-      ipc.setColor(Color.RED);
-      ipc.drawOval((int)(xpre-(rpre/factorx)), (int)(ypre-(rpre/factory)), (int)((2*rpre)/factorx), (int)((2*rpre)/factory));
-          
-      //circulo primer slice
-      if (r_z0_pre > 20) {
-        ipc.setColor(Color.GREEN);
-        ipc.drawOval((int)(x_z0_pre-(r_z0_pre/factorx)), (int)(y_z0_pre-(r_z0_pre/factory)), (int)((2*r_z0_pre)/factorx), (int)((2*r_z0_pre)/factory));
+      ColorProcessor icp = drawEstimations(projector.getProjection().getProcessor());
+      if (!this.previewWindowInitialized) {
+        ImagePlus impstack = new ImagePlus("Preview", icp);
+        impstack.show();
+        this.previewWindowInitialized = true;
       }
-      
-      //circulo ultimo slice
-      if (r_zs_pre > 20) { 
-        ipc.setColor(Color.ORANGE);
-        ipc.drawOval((int)(x_zs_pre-(r_zs_pre/factorx)), (int)(y_zs_pre-(r_zs_pre/factory)), (int)((2*r_zs_pre)/factorx), (int)((2*r_zs_pre)/factory));
+      else {
+        IJ.getImage().setImage(new ImagePlus("Preview", icp));
       }
-
-      ImagePlus impstack = new ImagePlus("MAX_stack_hermoso", ipc);
-      impstack.show();
+      this.previewCache.put(new Double(pelar), icp);
     }
-    if (!preview && !okPressed) {
-      System.out.println("Si calculo todo sin el preview");
-    }
-    if (!preview && okPressed) {
-      System.out.println("Si calculo todo sin el preview y con ok");
+    if (okPressed) {
+      System.out.println("OK");
       
       //duplicar para no modificar stack original
       ImagePlus img2 = sourceImagePlus.duplicate();
@@ -240,8 +226,8 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
       double distancia;
       
       //stack auxiliar para guardar stack proyectado
-      ImageStack stack_proyeccion = new ImageStack(width, height);    
-              
+      ImageStack resultsStack = new ImageStack(width, height);    
+      
       //centro y radio de la esfera
       double[] x0 = new double[tiempos];
       double[] y0 = new double[tiempos];
@@ -258,59 +244,12 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
         
       double[] datos;
       int cnt = 0;
-        
+      
       ZProjector projector = new ZProjector(img2); 
-      ImageProcessor proyeccion;
-      
       projector.setMethod(ZProjector.MAX_METHOD);
-        
-      double rmax = 0;
-      ColorProcessor ipc;
-      double x_z0, y_z0, x_zs, y_zs, r_z0, r_zs;
-
-      //circulo para z=0
-      pix_est = (byte[]) stack.getPixels(1);
-      for (int i=0; i < height; i++) {
-          offsetaux = i*width;
-          for (int j=0; j < width; j++) {
-            pos = offsetaux + j;
-            if ((pix_est[pos]) > threshold || pix_est[pos] < 0) {
-              mx[cnt] = j;
-              my[cnt] = i;
-              cnt += 1;
-            }
-          }
-      }
-        
-      datos = circleEstimation(mx, my, cnt);
-      x_z0 = datos[0];
-      y_z0 = datos[1];
-      r_z0 = datos[2];
-      cnt = 0;
       
-      //circulo para z=zs
-      pix_est = (byte[]) stack.getPixels(zs);
-      for (int i=0; i < height; i++) {
-        offsetaux = i*width;
-        for (int j=0; j < width; j++) {
-          pos = offsetaux + j;
-          if ((pix_est[pos]) > threshold || pix_est[pos] < 0) {
-              mx[cnt] = j;
-              my[cnt] = i;
-              cnt += 1;
-          }
-        }
-      }
-        
-      datos = circleEstimation(mx, my, cnt);
-      x_zs = datos[0];
-      y_zs = datos[1];
-      r_zs = datos[2];
-      cnt = 0;
-      double xp = 0, yp = 0;        
-        
       //proyectar para cada t
-      for(int t=1; t <= tiempos; t++) {
+      for(int t = 1; t <= tiempos; t++) {
         
         //estimar esfera
         for(int h=1; h <= zs; h++) {
@@ -362,35 +301,34 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
         // proyectar sobre todo z para el tiempo t
         projector.setStartSlice(t + (t-1)*zs);
         projector.setStopSlice(t*zs);
-        projector.doProjection();
-          
-        proyeccion = projector.getProjection().getProcessor();
-          
-        //convertir a color para dibujar circunferencias
-        ipc = proyeccion.convertToColorProcessor();
-          
-        //dibujar circulo de la aproximacion completa
-        ipc.setColor(Color.RED);
-        ipc.drawOval((int)(x0[t-1]-(r[t-1]/factorx)), (int)(y0[t-1]-(r[t-1]/factory)), (int)((2*r[t-1])/factorx), (int)((2*r[t-1])/factory));
-          
-        //circulo primer slice
-        if (r_z0 > 20) {
-          ipc.setColor(Color.GREEN);
-          ipc.drawOval((int)(x_z0-(r_z0/factorx)), (int)(y_z0-(r_z0/factory)), (int)((2*r_z0)/factorx), (int)((2*r_z0)/factory));
-        }
-          
-        //circulo ultimo slice
-        if (r_zs > 20) { 
-          ipc.setColor(Color.ORANGE);
-          ipc.drawOval((int)(x_zs-(r_zs/factorx)), (int)(y_zs-(r_zs/factory)), (int)((2*r_zs)/factorx), (int)((2*r_zs)/factory));
-        }
-          
-        //agregar slice con todos los circulos dibujadoss
-        stack_proyeccion.addSlice(ipc);
+        projector.doProjection();  
+        ColorProcessor ipc = drawEstimations(projector.getProjection().getProcessor());
+        resultsStack.addSlice(ipc);
       }
-      ImagePlus impstack = new ImagePlus("MAX_stack_hermoso", stack_proyeccion);
-      impstack.show();  
+      ImagePlus impstack = new ImagePlus("Result", resultsStack);
+      impstack.show();
     } 
+  }
+
+  private ColorProcessor drawEstimations(ImageProcessor ip) {
+    ColorProcessor icp = ip.convertToColorProcessor();
+          
+    //dibujar circulo de la aproximacion completa
+    icp.setColor(Color.RED);
+    icp.drawOval((int)(xpre-(rpre/factorx)), (int)(ypre-(rpre/factory)), (int)((2*rpre)/factorx), (int)((2*rpre)/factory));
+
+    //circulo primer slice
+    if (r_z0_pre > 20) {
+      icp.setColor(Color.GREEN);
+      icp.drawOval((int)(x_z0_pre-(r_z0_pre/factorx)), (int)(y_z0_pre-(r_z0_pre/factory)), (int)((2*r_z0_pre)/factorx), (int)((2*r_z0_pre)/factory));
+    }
+
+    //circulo ultimo slice
+    if (r_zs_pre > 20) { 
+      icp.setColor(Color.ORANGE);
+      icp.drawOval((int)(x_zs_pre-(r_zs_pre/factorx)), (int)(y_zs_pre-(r_zs_pre/factory)), (int)((2*r_zs_pre)/factorx), (int)((2*r_zs_pre)/factory));
+    }
+    return icp;
   }
 
   /** And here you do the actual cross-fade */
