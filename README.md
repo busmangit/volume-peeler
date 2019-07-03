@@ -6,7 +6,7 @@ Para compilar:
 javac -cp "C:\Fiji.app\jars\ij-1.52n.jar" Proyeccion_Esfera.java
 `
 
-Lo que he hecho
-- Formatear el codigo
-- Eliminar variables de instancia no usadas
--
+Para ejecutar:
+`
+java -Xmx16g -cp "C:\Fiji.app\jars\ij-1.52n.jar;." Proyeccion_Esfera ./examples/ejemplo_esfera.tif
+`
