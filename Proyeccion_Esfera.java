@@ -14,17 +14,13 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
 
   private static int FLAGS = STACK_REQUIRED | DOES_ALL;
   private byte[] sourcePixels;
-  private float[] previewDistanceMap;
-  private ImagePlus sourceImagePlus;
-  private double proportion;
-  private boolean preview = true;
-  private boolean okPressed = false;
-  private HashMap<Double, ColorProcessor> previewCache;
-  
-  private double x_z0_pre, y_z0_pre, x_zs_pre, y_zs_pre, r_z0_pre, r_zs_pre;
-  private double xpre, ypre, zpre, rpre;
-  private double factorx, factory, factorz;
   private int width, height, nSlices, nFrames, threshold, pixelsPerSlice, pixelsPerFrame;
+  private float[] previewDistanceMap;
+  private double proportion, factorx, factory, factorz;
+  private boolean preview = true, okPressed = false;
+  Point[] auxPointsArray;
+  private HashMap<Double, ColorProcessor> previewCache;
+  private Sphere z0Sphere, zfSphere, previewSphere;
   
   /**
    * This method is called by ImageJ for initialization.
@@ -38,28 +34,28 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
    */
   public int setup(String arg, ImagePlus imp) {
     Calibration cal = imp.getCalibration(); 
-    this.factorx = cal.pixelWidth; //x contains the pixel width in units
-    this.factory = cal.pixelHeight; //y contains the pixel height in units
-    this.factorz = cal.pixelDepth; //z contains the pixel (voxel) depth in units
-    this.sourceImagePlus = imp;
-    this.width = imp.getWidth(); //ancho de imagen
-    this.height = imp.getHeight(); //alto de imagen
-    this.nFrames = imp.getNFrames(); //nFrames a procesar
-    this.nSlices = imp.getNSlices() / this.nFrames; // numero de planos z
+    this.factorx = cal.pixelWidth;
+    this.factory = cal.pixelHeight;
+    this.factorz = cal.pixelDepth;
+    this.width = imp.getWidth();
+    this.height = imp.getHeight();
+    this.nFrames = imp.getNFrames();
+    this.nSlices = imp.getNSlices() / this.nFrames;
     this.pixelsPerSlice = this.width * this.height;
     this.pixelsPerFrame = this.pixelsPerSlice * this.nSlices;
     this.previewCache = new HashMap<Double, ColorProcessor>();
-    initSourcePixels();
-    initThreshold();
+    auxPointsArray = new Point[this.pixelsPerFrame / 15];
+    initSourcePixels(imp);
+    initThreshold(imp);
     runInitialEstimations(imp);
     return FLAGS;
   }
 
-  private void initSourcePixels() {
+  private void initSourcePixels(ImagePlus imp) {
     this.sourcePixels = new byte[this.pixelsPerSlice * this.nSlices * this.nFrames];
     for (int slice = 1; slice <= this.nSlices; slice++) {
-      this.sourceImagePlus.setSlice(slice);
-      byte[] pixels = (byte[])this.sourceImagePlus.getProcessor().getPixelsCopy();
+      imp.setSlice(slice);
+      byte[] pixels = (byte[])imp.getProcessor().getPixelsCopy();
       int zoffset = this.pixelsPerSlice * (slice - 1);
       for (int i = 0; i < this.height; i++) {
         int yoffset = i * this.width;
@@ -70,47 +66,19 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     }
   }
 
-  private void initThreshold() {
+  private void initThreshold(ImagePlus imp) {
     int thresholdSampleSlice = this.nSlices / 2;
-    this.sourceImagePlus.setSlice(thresholdSampleSlice);
-    this.sourceImagePlus.getProcessor().setAutoThreshold(AutoThresholder.Method.Otsu, true);
-    double otsuThreshold = this.sourceImagePlus.getProcessor().getMinThreshold();
+    imp.setSlice(thresholdSampleSlice);
+    imp.getProcessor().setAutoThreshold(AutoThresholder.Method.Otsu, true);
+    double otsuThreshold = imp.getProcessor().getMinThreshold();
     this.threshold = (int)Math.pow(2, (int)otsuThreshold / 2) / ((int)otsuThreshold / 2 - 1);
   }
 
   private void runInitialEstimations(ImagePlus imp) {
-    // arreglos para guardar datos para estimacion de la esfera
-    int dimension = this.pixelsPerFrame / 15;
-    double[] mx = new double[dimension];
-    double[] my = new double[dimension];
-    double[] mz = new double[dimension];
-    
-    // circulo para z=0
-    int cnt = pixelsOverThreshold(1, 1, 0, mx, my, mz);
-    Circle est = circleEstimation(mx, my, cnt);
-    x_z0_pre = est.center.x;
-    y_z0_pre = est.center.y;
-    r_z0_pre = est.r;
-
-    // circulo para z=zs
-    cnt = pixelsOverThreshold(1, this.nSlices, 0, mx, my, mz);
-    est = circleEstimation(mx, my, cnt);
-    x_zs_pre = est.center.x;
-    y_zs_pre = est.center.y;
-    r_zs_pre = est.r;
-    
-    // estimar esfera
-    cnt = 0;
-    for (int slice = 1; slice <= this.nSlices; slice++) {
-      cnt += pixelsOverThreshold(1, slice, cnt, mx, my, mz);
-    }
-    est = sphereEstimation(mx, my, mz, cnt);
-    xpre = est.center.x;
-    ypre = est.center.y;
-    zpre = est.center.z;
-    rpre = est.r;
-
-    this.previewDistanceMap = getDistanceMap(1, est.center);
+    this.z0Sphere = sphereEstimation(pixelsOverThreshold(1, 1, 0));
+    this.zfSphere = sphereEstimation(pixelsOverThreshold(1, this.nSlices, 0));
+    this.previewSphere = sphereEstimation(voxelsOverThreshold(1));
+    this.previewDistanceMap = getDistanceMap(1, previewSphere.center);
   }
 
   private float[] getDistanceMap(int frame, Point center) {
@@ -147,8 +115,16 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     preview = false;
     return FLAGS;
   }
+
+  private int voxelsOverThreshold(int frame) {
+    int cnt = 0;
+    for (int slice = 1; slice <= this.nSlices; slice++) {
+      cnt += pixelsOverThreshold(frame, slice, cnt);
+    }
+    return cnt;
+  }
   
-  private int pixelsOverThreshold(int frame, int slice, int prevCnt, double[] x, double[] y, double[] z) {
+  private int pixelsOverThreshold(int frame, int slice, int prevCnt) {
     int frameOffset = (frame - 1) * this.pixelsPerFrame;
     int cnt = 0;
     for (int i = 0; i < height; i++) {
@@ -156,9 +132,7 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
       for (int j = 0; j < width; j++) {
         int pos = offsetaux + j;
         if (this.sourcePixels[(slice - 1) * this.pixelsPerSlice + pos] > threshold || this.sourcePixels[(slice - 1) * this.pixelsPerSlice + pos] < 0) {
-          x[prevCnt + cnt] = j;
-          y[prevCnt + cnt] = i;
-          z[prevCnt + cnt] = slice - 1;
+          auxPointsArray[prevCnt + cnt] = new Point(j, i, slice - 1);
           cnt++;
         }
       }
@@ -184,11 +158,11 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
    */
   public void run(ImageProcessor ip) {
     System.out.println("FLAG para RUN ");
-    
     if (preview) {
       showPreview(this.proportion);
     }
     if (okPressed) {
+      System.out.println("OK");
       processAllFrames();
     } 
   }
@@ -198,9 +172,9 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
       IJ.getImage().setImage(new ImagePlus("Preview", this.previewCache.get(new Double(proportion))));
       return;
     }
-    int previewTime = 1;
-    double admittedRadius = proportion * rpre;
-    ImageStack previewStack = cropSphere(previewTime, admittedRadius, this.previewDistanceMap);
+    int previewFrame = 1;
+    double admittedRadius = proportion * this.previewSphere.r;
+    ImageStack previewStack = cropSphere(previewFrame, admittedRadius, this.previewDistanceMap);
     ZProjector projector = new ZProjector(new ImagePlus("Projection", previewStack));
     projector.setMethod(ZProjector.MAX_METHOD);
     projector.doProjection();
@@ -215,14 +189,14 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     this.previewCache.put(new Double(proportion), icp);
   }
 
-  private ImageStack cropSphere(int frame, double radius, float[] distanceMap) {
+  private ImageStack cropSphere(int frame, double radiusToKeep, float[] distanceMap) {
     ImageStack stack = new ImageStack(this.width, this.height, this.nSlices);
     int frameOffset = (frame - 1) * this.pixelsPerFrame;
     for (int i = 0; i < this.pixelsPerSlice * this.nSlices; i += this.pixelsPerSlice) {
       byte[] slice = new byte[this.pixelsPerSlice];
       for (int j = 0; j < this.pixelsPerSlice; j++) {
         int pos = i + j + frameOffset;
-        slice[j] = distanceMap[pos] > radius ? 0 : this.sourcePixels[pos];
+        slice[j] = distanceMap[pos] > radiusToKeep ? 0 : this.sourcePixels[pos];
       }
       stack.setPixels(slice, 1 + i / this.pixelsPerSlice);
     }
@@ -230,29 +204,10 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
   }
 
   private void processAllFrames() {
-    System.out.println("OK");
-    
     ImageStack resultsStack = new ImageStack(this.width, this.height, this.nSlices);
-      
-    //arreglos para guardar datos para estimacion de la esfera
-    int dimension = this.pixelsPerFrame / 15;
-    double[] mx = new double[dimension];
-    double[] my = new double[dimension];
-    double[] mz = new double[dimension];
-    
-    //proyectar para cada frame
     for(int frame = 1; frame <= nFrames; frame++) {
-      
-      //estimar esfera
-      double x, y, z, r;
-      int cnt = 0;
-      for (int slice = 1; slice <= this.nSlices; slice++) {
-        cnt += pixelsOverThreshold(frame, slice, cnt, mx, my, mz);
-      }
-      Circle est = sphereEstimation(mx, my, mz, cnt);
+      Sphere est = sphereEstimation(voxelsOverThreshold(frame));
       ImageStack sphere = cropSphere(frame, est.r * proportion, getDistanceMap(frame, est.center));
-      
-      // proyectar sobre todo z para el tiempo t
       ZProjector projector = new ZProjector(new ImagePlus("Projection", resultsStack));
       projector.setMethod(ZProjector.MAX_METHOD);
       projector.doProjection();  
@@ -265,23 +220,16 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
 
   private ColorProcessor drawEstimations(ImageProcessor ip) {
     ColorProcessor icp = ip.convertToColorProcessor();
-          
-    //dibujar circulo de la aproximacion completa
-    icp.setColor(Color.RED);
-    icp.drawOval((int)(xpre-(rpre/factorx)), (int)(ypre-(rpre/factory)), (int)((2*rpre)/factorx), (int)((2*rpre)/factory));
-
-    //circulo primer slice
-    if (r_z0_pre > 20) {
-      icp.setColor(Color.GREEN);
-      icp.drawOval((int)(x_z0_pre-(r_z0_pre/factorx)), (int)(y_z0_pre-(r_z0_pre/factory)), (int)((2*r_z0_pre)/factorx), (int)((2*r_z0_pre)/factory));
-    }
-
-    //circulo ultimo slice
-    if (r_zs_pre > 20) { 
-      icp.setColor(Color.ORANGE);
-      icp.drawOval((int)(x_zs_pre-(r_zs_pre/factorx)), (int)(y_zs_pre-(r_zs_pre/factory)), (int)((2*r_zs_pre)/factorx), (int)((2*r_zs_pre)/factory));
-    }
+    drawCircle(icp, Color.RED, previewSphere);
+    drawCircle(icp, Color.GREEN, z0Sphere);
+    drawCircle(icp, Color.ORANGE, zfSphere);
     return icp;
+  }
+
+  private void drawCircle(ImageProcessor ip, Color color, Sphere sphere) {
+    double x = sphere.center.x, y = sphere.center.y, z = sphere.center.z, r = sphere.r;
+    ip.setColor(color);
+    ip.drawOval((int)(x-(r/factorx)), (int)(y-(r/factory)), (int)((2*r)/factorx), (int)((2*r)/factory));
   }
 
   /** And here you do the actual cross-fade */
@@ -298,80 +246,40 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
   
   // El metodo asume que los puntos no son todos coplanares
   // y que estan aproximadamente en el borde
-  public Circle sphereEstimation(double[] x, double[] y, double[] z, int nPoints) {
-    Point centroid = getCentroid(x, y, z, nPoints);
+  public Sphere sphereEstimation(int nPoints) {
+    Point centroid = getCentroid(nPoints);
     Point center = new Point(centroid.x, centroid.y, centroid.z);
     for (int h = 1; h <= 300; h++) {
       double Lba = 0, Lbb = 0, Lbc = 0, Lb = 0;
       for (int i = 0; i < nPoints; i++) {
-          double dist = realDist(new Point(x[i], y[i], z[i]), center);
-          Lba += (center.x - x[i]) / (dist * nPoints);
-          Lbb += (center.y - y[i]) / (dist * nPoints);
-          Lbc += (center.z - z[i]) / (dist * nPoints);
+          double dist = realDist(auxPointsArray[i], center);
+          Lba += (center.x - auxPointsArray[i].x) / (dist * nPoints);
+          Lbb += (center.y - auxPointsArray[i].y) / (dist * nPoints);
+          Lbc += (center.z - auxPointsArray[i].z) / (dist * nPoints);
           Lb += dist / nPoints;
       }
       center.x = centroid.x + Lb * Lba;
       center.y = centroid.y + Lb * Lbb;
       center.z = centroid.z + Lb * Lbc;
     }
-    double r = getAverageDistance(x, y, z, nPoints, center.x, center.y, center.z);
-    return new Circle(center, r, 3);
+    double r = getAverageDistance(nPoints, center);
+    return new Sphere(center, r);
   }
 
-  private Point getCentroid(double[] x, double[] y, double[] z, int nPoints) {
-    double avgX = 0, avgY = 0, avgZ = 0;
+  private Point getCentroid(int nPoints) {
+    double sumX = 0, sumY = 0, sumZ = 0;
     for (int j = 0; j < nPoints; j++) {
-      avgX += x[j];
-      avgY += y[j];
-      avgZ += z[j];
+      sumX += auxPointsArray[j].x;
+      sumY += auxPointsArray[j].y;
+      sumZ += auxPointsArray[j].z;
     }
-    avgX /= nPoints;
-    avgY /= nPoints;
-    avgZ /= nPoints;
-    return new Point(avgX, avgY, avgZ);
+    return new Point(sumX / nPoints, sumY / nPoints, sumZ / nPoints);
   }
 
-  private double getAverageDistance(double[] x, double[] y, double[] z, int nPoints, double a, double b, double c) {
+  private double getAverageDistance(int nPoints, Point p) {
     double r = 0;
     for (int i = 0; i < nPoints; i++) {
-      r += realDist(new Point(x[i], y[i], z[i]), new Point(a, b, c));
-    }
-    return r / nPoints;
-  }
-  
-  public Circle circleEstimation(double[] x, double[] y, int nPoints) {
-    Point centroid = getCentroid(x, y, nPoints);
-    Point center = new Point(centroid.x, centroid.y);
-    for (int iter = 0; iter < 300; iter++) {
-      double Lba = 0, Lbb = 0, Lb = 0, dist = 0;
-      for (int i = 0; i < nPoints; i++) {
-        dist = realDist(new Point(x[i], y[i]), center);
-        Lba += (center.x - x[i]) / (dist * nPoints);
-        Lbb += (center.y - y[i]) / (dist * nPoints);
-        Lb += dist / nPoints;
-      }
-      center.x = centroid.x + Lb * Lba;
-      center.y = centroid.y + Lb * Lbb;
-    }
-    double r = getAverageDistance(x, y, nPoints, center.x, center.y);
-    return new Circle(center, r, 2);
-  }
-
-  private Point getCentroid(double[] x, double[] y, int nPoints) {
-    double avgX = 0, avgY = 0;
-    for (int j = 0; j < nPoints; j++) {
-      avgX += x[j];
-      avgY += y[j];
-    }
-    avgX /= nPoints;
-    avgY /= nPoints;
-    return new Point(avgX, avgY);
-  }
-
-  private double getAverageDistance(double[] x, double[] y, int nPoints, double a, double b) {
-    double r = 0;
-    for (int i = 0; i < nPoints; i++) {
-      r += realDist(new Point(x[i], y[i]), new Point(a, b));
+      r += realDist(auxPointsArray[i], p);
     }
     return r / nPoints;
   }
@@ -394,17 +302,16 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     public Point(double x, double y) {
       this.x = x;
       this.y = y;
+      this.z = 0;
     }
   }
 
-  private class Circle {
+  private class Sphere {
     Point center;
     double r;
-    int dimensions;
-    public Circle(Point center, double r, int d) {
+    public Sphere(Point center, double r) {
       this.center = center;
       this.r = r;
-      this.dimensions = d;
     }
   }
 }
