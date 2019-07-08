@@ -187,26 +187,29 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
   }
 
   private ImageStack cropSphere(int frame, double radiusToKeep, float[] distanceMap) {
-    ImageStack stack = new ImageStack(this.width, this.height, this.nSlices);
+    ImageStack stack = new ImageStack(this.width, this.height);
     int frameOffset = (frame - 1) * this.pixelsPerFrame;
     for (int i = 0; i < this.pixelsPerFrame; i += this.pixelsPerSlice) {
       byte[] slice = new byte[this.pixelsPerSlice];
       for (int j = 0; j < this.pixelsPerSlice; j++) {
         int pos = frameOffset + j + i;
-        slice[j] = distanceMap[pos] > radiusToKeep ? 0 : this.sourcePixels[pos];
+        //slice[j] = distanceMap[pos] > radiusToKeep ? 0 : this.sourcePixels[pos];
+        slice[j] = distanceMap[pos - frameOffset] > radiusToKeep ? 0 : this.sourcePixels[pos];
       }
-      stack.setPixels(slice, 1 + i / this.pixelsPerSlice);
+      stack.addSlice("Slice " + i, slice);
     }
     return stack;
   }
 
   private void processAllFrames() {
-    ImageStack resultsStack = new ImageStack(this.width, this.height, this.nSlices);
+    ImageStack resultsStack = new ImageStack(this.width, this.height);
     for (int frame = 1; frame <= nFrames; frame++) {
+      System.out.println("Procesando frame " + frame);
       Sphere est = sphereEstimation(voxelsOverThreshold(frame));
       ImageStack sphere = cropSphere(frame, est.r * proportion, getDistanceMap(frame, est.center));
-      ColorProcessor ipc = drawEstimations(getZProjectionProcessor(sphere));
-      resultsStack.addSlice(ipc);
+      /*ColorProcessor ipc = drawEstimations(getZProjectionProcessor(sphere));
+      resultsStack.addSlice(ipc);*/
+      resultsStack.addSlice(getZProjectionProcessor(sphere));
     }
     ImagePlus impstack = new ImagePlus("Result", resultsStack);
     impstack.show();
@@ -275,7 +278,6 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     new ImageJ();
     ImagePlus image = IJ.openImage(args[0]);
     IJ.runPlugIn(image, "Proyeccion_Esfera", "parameter=value");
-    // image.show();
     WindowManager.addWindow(image.getWindow());
   }
 

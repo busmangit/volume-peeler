@@ -1330,8 +1330,8 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
                 	    int zoom = event.getWheelRotation(); 
                         String cadena = "";
                         
-                    		//System.out.println("Esta en la SLice :" +Stack_Tp.getCurrentSlice());  
-                        	//System.out.println("Valor del cuadro obvio"+ gcs);
+                    		System.out.println("Esta en la SLice :" +Stack_Tp.getCurrentSlice());  
+                        	// System.out.println("Valor del cuadro obvio"+ gcs);
 
                         
                     
@@ -2536,7 +2536,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
 			//ImagePlus image = IJ.openVirtual("Z:/Eclipse/Fijithelium/examples/stack_t001.tif");
 			//ImagePlus image = IJ.openVirtual("Z:/Eclipse/Fijithelium/examples/Stack/stack_t01-t10.tif");
 			
-			ImagePlus image = IJ.openVirtual("Z:/proyeccion_general/proyeccion_general/concatenated_stack.tif");
+			ImagePlus image = IJ.openVirtual("C:/Users/Alejandro/Desktop/java/epithelium-projection/examples/sshort sequence-1.tif");
 			
 			
 			
