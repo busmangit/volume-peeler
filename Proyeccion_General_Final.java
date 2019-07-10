@@ -50,7 +50,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
-public class Proyeccion_General_Final extends JFrame implements PlugInFilter, KeyListener, ImageListener, Observer{
+public class Proyeccion_General_Final extends JFrame implements PlugInFilter, KeyListener, ImageListener, Observer {
 
   static double scroll;
   
@@ -865,370 +865,220 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
           // PUNTO 3//
           if (Xcursor>=Xlvl[1] && Xcursor<= width && Ycursor>=0 && Ycursor<= Ylvl[0] && crtlpress) {
             if (zoom < 0) {  
-                int intcadena = (int) (roll[currentslice][6]);
-                cadena = String.valueOf(intcadena);  
-                
-                if (intcadena< zs)
-                {
-                  //System.out.println("Int cadena " + intcadena);
-                  roll[currentslice][6] +=1;
-                }
-            
-                //System.out.println("Valor de zoom mas"+wheel);
-                
-                robot.delay(1);
-                robot.mousePress(MouseEvent.BUTTON1_MASK);
-                robot.mouseRelease(MouseEvent.BUTTON1_MASK);
-                
-                overlay.clear();
-                        llenar_overlay();
-                
-            }
-            else 
-            {
-              //System.out.println("Valor de zoom menos"+wheel);
-                
-              
               int intcadena = (int) (roll[currentslice][6]);
               cadena = String.valueOf(intcadena);  
-                  if (intcadena>1)
-                {
-                  //System.out.println("Int cadena " + intcadena);
-                   roll[currentslice][6] -=1;
-                }
+              if (intcadena < zs) {
+                //System.out.println("Int cadena " + intcadena);
+                roll[currentslice][6] +=1;
+              }
               robot.delay(1);
               robot.mousePress(MouseEvent.BUTTON1_MASK);
               robot.mouseRelease(MouseEvent.BUTTON1_MASK);
-              
               overlay.clear();
-                      llenar_overlay();
-              
-              
-              
+              llenar_overlay();  
             }
-            
+            else {
+              int intcadena = (int) (roll[currentslice][6]);
+              cadena = String.valueOf(intcadena);  
+              if (intcadena > 1) {
+                roll[currentslice][6] -=1;
+              }
+              robot.delay(1);
+              robot.mousePress(MouseEvent.BUTTON1_MASK);
+              robot.mouseRelease(MouseEvent.BUTTON1_MASK);
+              overlay.clear();
+              llenar_overlay();
             }
-
-                  
-                     /////////////////////////////////////////////////
-                           // PUNTO 4//
-
-                  
-                  if (Xcursor>=0 && Xcursor<= Xlvl[0] && Ycursor>=Ylvl[0] && Ycursor<= Ylvl[1] && crtlpress)
-                  {
-                         if (zoom<0)  
-                          {  
-                           int intcadena = (int) (roll[currentslice][1]);
-                              cadena = String.valueOf(intcadena);  
-                            if (intcadena< zs)
-                            {
-                              //System.out.println("Int cadena " + intcadena);
-                              roll[currentslice][1] +=1;
-                            }
-                            
-                            //System.out.println("Valor de zoom mas"+wheel);
-                               robot.delay(1);
-                        robot.mousePress(MouseEvent.BUTTON1_MASK);
-                        robot.mouseRelease(MouseEvent.BUTTON1_MASK);
-                        
-                        overlay.clear();
-                        llenar_overlay();
-                
-                          }
-                          else 
-                          {
-                            //System.out.println("Valor de zoom menos"+wheel);
+          }
+          
+          /////////////////////////////////////////////////
+          // PUNTO 4//
+          if (Xcursor>=0 && Xcursor<= Xlvl[0] && Ycursor>=Ylvl[0] && Ycursor<= Ylvl[1] && crtlpress) {
+            if (zoom < 0) {  
+              int intcadena = (int) (roll[currentslice][1]);
+              cadena = String.valueOf(intcadena);  
+              if (intcadena< zs) {
+                roll[currentslice][1] +=1;
+              }
+              robot.delay(1);
+              robot.mousePress(MouseEvent.BUTTON1_MASK);
+              robot.mouseRelease(MouseEvent.BUTTON1_MASK);
+              overlay.clear();
+              llenar_overlay();
+            }
+            else {
+              int intcadena = (int) (roll[currentslice][1]);
+              cadena = String.valueOf(intcadena);  
+              if (intcadena>1) {
+                roll[currentslice][1] -=1;
+              }
+              robot.delay(1);
+              robot.mousePress(MouseEvent.BUTTON1_MASK);
+              robot.mouseRelease(MouseEvent.BUTTON1_MASK);
+              overlay.clear();
+              llenar_overlay();
+            }
+          }
                               
-                            
-                            int intcadena = (int) (roll[currentslice][1]);
-                              cadena = String.valueOf(intcadena);  
-                                if (intcadena>1)
-                              {
-                                //System.out.println("Int cadena " + intcadena);
-                                 roll[currentslice][1] -=1;
-                              }
-                            robot.delay(1);
-                        robot.mousePress(MouseEvent.BUTTON1_MASK);
-                        robot.mouseRelease(MouseEvent.BUTTON1_MASK);
-                        
-                        overlay.clear();
-                        llenar_overlay();
-                
-                        
-                          }
-                        
-                              }
-                              
-            /////////////////////////////////////////////////
-            // PUNTO 5//
-            
-            if (Xcursor>=Xlvl[0] && Xcursor<= Xlvl[1] && Ycursor>=Ylvl[0] && Ycursor<= Ylvl[1] && crtlpress)
-            {
-              if (zoom<0)  
-              {  
-                int intcadena = (int) (roll[currentslice][4]);
-                cadena = String.valueOf(intcadena);  
-                
-                if (intcadena< zs)
-                {
-                  //System.out.println("Int cadena " + intcadena);
-                  roll[currentslice][4] +=1;
-                }
-            
-                //System.out.println("Valor de zoom mas"+wheel);
-                robot.delay(1);
-                robot.mousePress(MouseEvent.BUTTON1_MASK);
-                robot.mouseRelease(MouseEvent.BUTTON1_MASK);
-                
-                overlay.clear();
-                        llenar_overlay();
-                
-                
+          /////////////////////////////////////////////////
+          // PUNTO 5//
+          if (Xcursor>=Xlvl[0] && Xcursor<= Xlvl[1] && Ycursor>=Ylvl[0] && Ycursor<= Ylvl[1] && crtlpress) {
+            if (zoom<0) {  
+              int intcadena = (int) (roll[currentslice][4]);
+              cadena = String.valueOf(intcadena);  
+              if (intcadena< zs) {
+                roll[currentslice][4] +=1;
+              }
+              robot.delay(1);
+              robot.mousePress(MouseEvent.BUTTON1_MASK);
+              robot.mouseRelease(MouseEvent.BUTTON1_MASK);
+              overlay.clear();
+              llenar_overlay();
             }
-            else 
-            {
-            //System.out.println("Valor de zoom menos"+wheel);
-              
-            
-            int intcadena = (int) (roll[currentslice][4]);
-            cadena = String.valueOf(intcadena);  
-                if (intcadena>1)
-              {
-                //System.out.println("Int cadena " + intcadena);
+            else {
+              int intcadena = (int) (roll[currentslice][4]);
+              cadena = String.valueOf(intcadena);  
+              if (intcadena>1) {
                  roll[currentslice][4] -=1;
               }
-            robot.delay(1);
-            robot.mousePress(MouseEvent.BUTTON1_MASK);
-            robot.mouseRelease(MouseEvent.BUTTON1_MASK);
-            
-            overlay.clear();
-                  llenar_overlay();
-            
+              robot.delay(1);
+              robot.mousePress(MouseEvent.BUTTON1_MASK);
+              robot.mouseRelease(MouseEvent.BUTTON1_MASK);
+              overlay.clear();
+              llenar_overlay();
             }
-            
-              
-            }
-              
-            /////////////////////////////////////////////////
-            // PUNTO 6//
-            
-            if (Xcursor>=Xlvl[1] && Xcursor<= width && Ycursor>=Ylvl[0] && Ycursor<= Ylvl[1] && crtlpress)
-            {
-              if (zoom<0)  
-              {  
-                int intcadena = (int) (roll[currentslice][7]);
-                cadena = String.valueOf(intcadena);  
-                
-                if (intcadena< zs)
-                {
-                  //System.out.println("Int cadena " + intcadena);
-                  roll[currentslice][7] +=1;
-                }
-            
-                //System.out.println("Valor de zoom mas"+wheel);
-                robot.delay(1);
-                robot.mousePress(MouseEvent.BUTTON1_MASK);
-                robot.mouseRelease(MouseEvent.BUTTON1_MASK);
-                
-                overlay.clear();
-                        llenar_overlay();
-                
-            
-            }
-            else 
-            {
-            //System.out.println("Valor de zoom menos"+wheel);
-              
-            
-            int intcadena = (int) (roll[currentslice][7]);
-            cadena = String.valueOf(intcadena);  
-                if (intcadena>1)
-              {
-                //System.out.println("Int cadena " + intcadena);
-                 roll[currentslice][7] -=1;
+          }
+          
+          /////////////////////////////////////////////////
+          // PUNTO 6//
+          if (Xcursor>=Xlvl[1] && Xcursor<= width && Ycursor>=Ylvl[0] && Ycursor<= Ylvl[1] && crtlpress) {
+            if (zoom<0) {  
+              int intcadena = (int) (roll[currentslice][7]);
+              cadena = String.valueOf(intcadena);  
+              if (intcadena< zs) {
+                roll[currentslice][7] +=1;
               }
               robot.delay(1);
               robot.mousePress(MouseEvent.BUTTON1_MASK);
               robot.mouseRelease(MouseEvent.BUTTON1_MASK);
-              
               overlay.clear();
-                      llenar_overlay();
-              
+              llenar_overlay();
+            }
+            else {
+              int intcadena = (int) (roll[currentslice][7]);
+              cadena = String.valueOf(intcadena);  
+              if (intcadena>1) {
+                roll[currentslice][7] -=1;
               }
-            
+              robot.delay(1);
+              robot.mousePress(MouseEvent.BUTTON1_MASK);
+              robot.mouseRelease(MouseEvent.BUTTON1_MASK);
+              overlay.clear();
+              llenar_overlay();
             }
+          }
             
-            /////////////////////////////////////////////////
-                  // PUNTO 7//
-                  
-                  if (Xcursor>=0 && Xcursor<= Xlvl[0] && Ycursor>=Ylvl[1] && Ycursor<= height && crtlpress)
-                  {
-                    //System.out.println("EL CUADRO ESTE");
-                         if (zoom<0)  
-                          {  
-                           int intcadena = (int) (roll[currentslice][2]);
-                              cadena = String.valueOf(intcadena);  
-                            if (intcadena< zs)
-                            {
-                              //System.out.println("Int cadena " + intcadena);
-                              roll[currentslice][2] +=1;
-                            }
-                            
-                            //System.out.println("Valor de zoom mas"+wheel);
-                               robot.delay(1);
-                        robot.mousePress(MouseEvent.BUTTON1_MASK);
-                        robot.mouseRelease(MouseEvent.BUTTON1_MASK);
-                        
-                        overlay.clear();
-                        llenar_overlay();
-                
-                          }
-                          else 
-                          {
-                            //System.out.println("Valor de zoom menos"+wheel);
-                              
-                            
-                            int intcadena = (int) (roll[currentslice][2]);
-                              cadena = String.valueOf(intcadena);  
-                                if (intcadena>1)
-                              {
-                                //System.out.println("Int cadena " + intcadena);
-                                 roll[currentslice][2] -=1;
-                              }
-                            robot.delay(1);
-                        robot.mousePress(MouseEvent.BUTTON1_MASK);
-                        robot.mouseRelease(MouseEvent.BUTTON1_MASK);
-
-                        overlay.clear();
-                        llenar_overlay();
-                                        
-                          }
-                        
-                  }
-                              
-            /////////////////////////////////////////////////
-            // PUNTO 8//
-            
-            if (Xcursor>=Xlvl[0] && Xcursor<= Xlvl[1] && Ycursor>=Ylvl[1] && Ycursor<= height && crtlpress)
-            {
-              //System.out.println("EL CUADRO ESTE 8");
-                  if (zoom<0)  
-                {  
-                    int intcadena = (int) (roll[currentslice][5]);
-                    cadena = String.valueOf(intcadena);  
-                  if (intcadena< zs)
-                  {
-                    //System.out.println("Int cadena " + intcadena);
-                    roll[currentslice][5] +=1;
-                  }
-                  
-                  //System.out.println("Valor de zoom mas"+wheel);
-                     robot.delay(1);
-                robot.mousePress(MouseEvent.BUTTON1_MASK);
-                robot.mouseRelease(MouseEvent.BUTTON1_MASK);
-                
-                overlay.clear();
-                        llenar_overlay();
-                            
-                }
-                else 
-                {
-                  //System.out.println("Valor de zoom menos"+wheel);
-                    
-                  
-                  int intcadena = (int) (roll[currentslice][5]);
-                    cadena = String.valueOf(intcadena);  
-                      if (intcadena>1)
-                    {
-                      //System.out.println("Int cadena " + intcadena);
-                       roll[currentslice][5] -=1;
-                    }
-                  robot.delay(1);
-                robot.mousePress(MouseEvent.BUTTON1_MASK);
-                robot.mouseRelease(MouseEvent.BUTTON1_MASK);
-                
-                overlay.clear();
-                        llenar_overlay();
-                
-                }
-              
+          /////////////////////////////////////////////////
+          // PUNTO 7//
+          if (Xcursor>=0 && Xcursor<= Xlvl[0] && Ycursor>=Ylvl[1] && Ycursor<= height && crtlpress) {
+            if (zoom<0) {  
+              int intcadena = (int) (roll[currentslice][2]);
+              cadena = String.valueOf(intcadena);  
+              if (intcadena< zs) {
+                roll[currentslice][2] +=1;
+              }
+              robot.delay(1);
+              robot.mousePress(MouseEvent.BUTTON1_MASK);
+              robot.mouseRelease(MouseEvent.BUTTON1_MASK);
+              overlay.clear();
+              llenar_overlay();
             }
+            else {
+              int intcadena = (int) (roll[currentslice][2]);
+              cadena = String.valueOf(intcadena);  
+              if (intcadena>1) {
+                roll[currentslice][2] -=1;
+              }
+              robot.delay(1);
+              robot.mousePress(MouseEvent.BUTTON1_MASK);
+              robot.mouseRelease(MouseEvent.BUTTON1_MASK);
+              overlay.clear();
+              llenar_overlay();
+            }
+          }
+                              
+          /////////////////////////////////////////////////
+          // PUNTO 8//
+          if (Xcursor>=Xlvl[0] && Xcursor<= Xlvl[1] && Ycursor>=Ylvl[1] && Ycursor<= height && crtlpress) {
+            if (zoom<0) {  
+              int intcadena = (int) (roll[currentslice][5]);
+              cadena = String.valueOf(intcadena);  
+              if (intcadena< zs) {
+                roll[currentslice][5] +=1;
+              }
+              robot.delay(1);
+              robot.mousePress(MouseEvent.BUTTON1_MASK);
+              robot.mouseRelease(MouseEvent.BUTTON1_MASK);
+              overlay.clear();
+              llenar_overlay();
+            }
+            else {
+              int intcadena = (int) (roll[currentslice][5]);
+              cadena = String.valueOf(intcadena);  
+              if (intcadena>1) {
+                roll[currentslice][5] -=1;
+              }
+              robot.delay(1);
+              robot.mousePress(MouseEvent.BUTTON1_MASK);
+              robot.mouseRelease(MouseEvent.BUTTON1_MASK);
+              overlay.clear();
+              llenar_overlay();
+            }
+          }
 
           /////////////////////////////////////////////////
           // PUNTO 9//
-          
-          if (Xcursor>=Xlvl[1] && Xcursor<= width && Ycursor>=Ylvl[1] && Ycursor<= height && crtlpress)
-          {
-            //System.out.println("EL CUADRO ESTE 8");
-                if (zoom<0)  
-              {  
-                  int intcadena = (int) (roll[currentslice][8]);
-                  cadena = String.valueOf(intcadena);  
-                if (intcadena< zs)
-                {
-                  //System.out.println("Int cadena " + intcadena);
-                  roll[currentslice][8] +=1;
-                }
-                
-                //System.out.println("Valor de zoom mas"+wheel);
-                   robot.delay(1);
+          if (Xcursor>=Xlvl[1] && Xcursor<= width && Ycursor>=Ylvl[1] && Ycursor<= height && crtlpress) {
+            if (zoom<0) {  
+              int intcadena = (int) (roll[currentslice][8]);
+              cadena = String.valueOf(intcadena);  
+              if (intcadena< zs) {
+                roll[currentslice][8] +=1;
+              }
+              robot.delay(1);
               robot.mousePress(MouseEvent.BUTTON1_MASK);
               robot.mouseRelease(MouseEvent.BUTTON1_MASK);
-              
               overlay.clear();
-                      llenar_overlay();
-                        
+              llenar_overlay();
+            }
+            else {
+              int intcadena = (int) (roll[currentslice][8]);
+              cadena = String.valueOf(intcadena);  
+              if (intcadena>1) {
+                roll[currentslice][8] -=1;
               }
-              else 
-              {
-                //System.out.println("Valor de zoom menos"+wheel);
-                  
-                
-                int intcadena = (int) (roll[currentslice][8]);
-                  cadena = String.valueOf(intcadena);  
-                    if (intcadena>1)
-                  {
-                    //System.out.println("Int cadena " + intcadena);
-                     roll[currentslice][8] -=1;
-                  }
-                robot.delay(1);
+              robot.delay(1);
               robot.mousePress(MouseEvent.BUTTON1_MASK);
               robot.mouseRelease(MouseEvent.BUTTON1_MASK);
-              
               overlay.clear();
-                      llenar_overlay();
-              
-              }
-            
+              llenar_overlay();
+            }
           }
-                            
-                  
-                }
-                }   
         }
-        
-        
+      }   
+    }
+  }
+  
+  /// La ventana principal del menu de seleccion de valores
+  public int SliderWind() {
+    Ventana = new JFrame();
+    Ventana.setTitle("Ventana de prueba");
+    Ventana.setSize(400,450);
+    Ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    Ventana.setBounds(400, 450, 426, 482);
+    Ventana.setLocationRelativeTo(null);
+    Ventana.setLayout(null);
     
-        
-}
-    
-    
-   
-    /// La ventana principal del menu de seleccion de valores
-    
-    public int SliderWind() {
-      
-      
-      Ventana = new JFrame();
-     Ventana.setTitle("Ventana de prueba");
-     Ventana.setSize(400,450);
-     Ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-     Ventana.setBounds(400, 450, 426, 482);
-    
-     Ventana.setLocationRelativeTo(null);
-     Ventana.setLayout(null);
-     
-     
     lblTiemposDeCorte = new JLabel("Tiempos de Corte");
     lblTiemposDeCorte.setBounds(71, 42, 130, 33);
     Ventana.add(lblTiemposDeCorte);
@@ -1294,663 +1144,365 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
     cancel.addActionListener(new CancelButton());
     cancel.setBounds(170, 397, 97, 25);
     Ventana.add(cancel);
-     Ventana.setVisible(true);
-      
-     int canwin = 0;
-     
+    Ventana.setVisible(true);
     
-     
-     //System.out.println("Accion del boton del ver "+ ver_tiempos.getAction());
-     
-     return canwin ;
-     
-    }
+    int canwin = 0;
+    return canwin;
+  }
 
-    // Empiezan los listener, por boton, por valor, por accion y por proceso.
-    
-    private class VertodosActionListener implements ActionListener
-  {
+  // Empiezan los listener, por boton, por valor, por accion y por proceso.
+  private class VertodosActionListener implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      // TODO Auto-generated method stub
-      
-      
-      
-      
-      
-      if(!vertiempos_pressed)
-      {  
-      
+      if(!vertiempos_pressed) {  
         time_corte = tiempos_corte_j.getText();
         lvl_corte = Integer.valueOf(nivel_corte.getText());
-        
         tiempos_corte = time_corte.split("-");
-        
-          
-        
-        if (lvl_corte > 0 && lvl_corte< zs)
-        {
-          flag_breaker=false;
+        if (lvl_corte > 0 && lvl_corte< zs) {
+          flag_breaker = false;
           validar_variables = false;
-          
-          //System.out.println("Tiempos corte del formulario : "+time_corte+ " corte " +lvl_corte );
-          //System.out.println("1 tiempo "+ Integer.parseInt(tiempos_corte[0]));
-          
         }
-        else
-        {
-          
+        else {
           IJ.showMessage("El nivel de corte ingresado es incorrecto \nDebe ser un valor entre "+ 0 + " y "+ zs);
-          
         }
         
         int sizethis= tiempos_corte.length;
-        //System.out.println("Tamano del tiempos corte "+ sizethis);
-        
         parser = new int[sizethis];
-        
-        for(int x =0; x < sizethis; x++)
-        {
-          if(!tiempos_corte[x].equals(" ") && !tiempos_corte[x].equals(""))
-          {
-            //System.out.println("Valor es "+ Integer.parseInt(tiempos_corte[x]));
-            parser[parser_count] = Integer.parseInt(tiempos_corte[x]);
-  
+        for(int x =0; x < sizethis; x++) {
+          if(!tiempos_corte[x].equals(" ") && !tiempos_corte[x].equals("")) {
+            parser[parser_count] = Integer.parseInt(tiempos_corte[x]);  
             parser_count++;  
           }
         }
         
         //System.out.println("En realidad los numeros son "+ parser_count  );
         enable_scroll_change = true;
-        
-        
-        //IJ. log("The user clicked on the 'Yes' button"); 
-           roll =  new double[parser_count][9];
-          
-          for (int tps = 0; tps < parser_count; tps++ )
-          {
-            for (int points = 0; points < 9; points++ )
-            {
-              roll[tps][points] = lvl_corte;
-              //System.out.println("Valor de Roll de X: "+tps +" // Y: "+ points+" es "+ roll[tps][points]);
-              
-            }
-            
+        roll =  new double[parser_count][9];
+        for (int tps = 0; tps < parser_count; tps++) {
+          for (int points = 0; points < 9; points++) {
+            roll[tps][points] = lvl_corte;              
           }
+        }
           
-         anterior = new int [parser_count][9];
-         siguiente = new int [parser_count][9];
+        anterior = new int [parser_count][9];
+        siguiente = new int [parser_count][9];
         
-         
-         
-         for (int x = 0; x<parser_count; x++)
-         {
-           for (int y = 0; y<9;y++)
-           {
-             anterior [x][y]= lvl_corte;
-             siguiente [x][y]= lvl_corte;
-           }
-         }
+        for (int x = 0; x<parser_count; x++) {
+          for (int y = 0; y<9;y++) {
+            anterior [x][y]= lvl_corte;
+            siguiente [x][y]= lvl_corte;
+          }
+        }
         
         //////// CICLO PARA GENERAR TODOS LOS TIEMPOS 
+        Xlvl = new int [2];
+        Ylvl = new int [2];
+        Inter1 = new int [3];
+        Inter2 = new int [3];
+        Inter3 = new int [3];
         
+        int Xsetpoints = width/6;
+        int Ysetpoints = height/6;
+           
+        Xlvl[0] = Xsetpoints * 2;
+        Xlvl[1] = (Xsetpoints * 4);
+        Ylvl[0] = Ysetpoints * 2;
+        Ylvl[1] = (Ysetpoints * 4);
         
+        Inter1[0] = Xsetpoints;
+        Inter1[1] = Xsetpoints * 3;
+        Inter1[2] = Xsetpoints * 5;
         
-         Xlvl = new int [2];
-         Ylvl = new int [2];
-         
-         Inter1 = new int [3];
-         Inter2 = new int [3];
-         Inter3 = new int [3];
-         
-         int Xsetpoints = width/6;
-           int Ysetpoints = height/6;
-           
-           Xlvl[0] = Xsetpoints * 2;
-           Xlvl[1] = (Xsetpoints * 4);
-           Ylvl[0] = Ysetpoints * 2;
-           Ylvl[1] = (Ysetpoints * 4);
-           
-           Inter1[0] = Xsetpoints;
-           Inter1[1] = Xsetpoints * 3;
-           Inter1[2] = Xsetpoints * 5;
-           
-           Inter2[0] = Ysetpoints;
-           Inter2[1] = Ysetpoints * 3;
-           Inter2[2] = Ysetpoints * 5;
+        Inter2[0] = Ysetpoints;
+        Inter2[1] = Ysetpoints * 3;
+        Inter2[2] = Ysetpoints * 5;
           
-           //calcular_borrado_inicial(parser,parser_count,choice);
-         //calcular_borrado_scroll(parser,parser_count,choice);
-           calcular_borrado_totalsintiempo(parser,parser_count,choice);  
-              
-          
-            
-            screenmod = true;
-        
-            
-            
-            Ventana.setVisible(false);
-      
-          return;
+        calcular_borrado_totalsintiempo(parser,parser_count,choice);  
+        screenmod = true;
+        Ventana.setVisible(false);
+        return;
       }
       
-      else 
-      {
-        if(vertiempos_pressed)
-        {
-          //System.out.println("Aca hay que pasar los label.");
+      else {
+        if(vertiempos_pressed) {
           calcular_borrado_total(parser,parser_count,choice);
-          
           Ventana.setVisible(false);
           Stack_Tp.close();
-            
-            return;
-          
+          return;
         }
-        
       }
     }
-      
   }
-    private class TiemposcorteKeyListener  implements KeyListener
-  {
-
-      
-      public void keyPressed(KeyEvent evt) {
-        // TODO Auto-generated method stub
-        
-        int key=evt.getKeyCode();
-            String keytex = KeyEvent.getKeyText(key);
-            
-            //System.out.println("Numero "+ key +" texto " + keytex);
-
-        
-        if(key>=evt.VK_0 && key<=evt.VK_9 || key==evt.VK_ACCEPT || key==evt.VK_TAB || key==evt.VK_BACK_SPACE || key==evt.VK_NUMPAD0 || key==evt.VK_NUMPAD9 || keytex.equals("Minus"))
-        {
-          tiempos_corte_j.setEditable(true);
-          
-        }
-        else 
-          {
-          tiempos_corte_j.setEditable(false); 
-          tiempos_corte_j.setEnabled(true);
-          //nivel_corte.setBackground(Color.red);
-          }
-        
-        
+  
+  private class TiemposcorteKeyListener implements KeyListener {
+    
+    public void keyPressed(KeyEvent evt) {
+      int key=evt.getKeyCode();
+      String keytex = KeyEvent.getKeyText(key);
+      if (key>=evt.VK_0 && key<=evt.VK_9 || key==evt.VK_ACCEPT || key==evt.VK_TAB || key==evt.VK_BACK_SPACE || key==evt.VK_NUMPAD0 || key==evt.VK_NUMPAD9 || keytex.equals("Minus")) {
+        tiempos_corte_j.setEditable(true);  
       }
-      
+      else {
+        tiempos_corte_j.setEditable(false); 
+        tiempos_corte_j.setEnabled(true);
+      }
+    }
     
     @Override
     public void keyReleased(KeyEvent arg0) {
-      // TODO Auto-generated method stub
-      
     }
 
     @Override
     public void keyTyped(KeyEvent arg0) {
-      // TODO Auto-generated method stub
+    }
+  }
+  
+  private class NivelcorteKeyListener implements KeyListener {
       
+    public void keyPressed(KeyEvent evt) {
+      int key=evt.getKeyCode();
+      if (key>=evt.VK_0 && key<=evt.VK_9 || key==evt.VK_ACCEPT || key==evt.VK_TAB || key==evt.VK_BACK_SPACE || key==evt.VK_NUMPAD0 || key==evt.VK_NUMPAD9) {
+        nivel_corte.setEditable(true);
+      }
+      else {
+        nivel_corte.setEditable(false); 
+        nivel_corte.setEnabled(true);
+      }
     }
       
-  }
-    private class NivelcorteKeyListener implements KeyListener
-  {
-
-      
-      public void keyPressed(KeyEvent evt) {
-        // TODO Auto-generated method stub
-        
-        int key=evt.getKeyCode();
-        if(key>=evt.VK_0 && key<=evt.VK_9 || key==evt.VK_ACCEPT || key==evt.VK_TAB || key==evt.VK_BACK_SPACE || key==evt.VK_NUMPAD0 || key==evt.VK_NUMPAD9)
-        {
-          nivel_corte.setEditable(true);
-          
-        }
-        else 
-          {
-          nivel_corte.setEditable(false); 
-          nivel_corte.setEnabled(true);
-          //nivel_corte.setBackground(Color.red);
-          }
-        
-          
-      }
-      
-    
     @Override
     public void keyReleased(KeyEvent arg0) {
-      // TODO Auto-generated method stub
-      
     }
 
     @Override
     public void keyTyped(KeyEvent arg0) {
-      // TODO Auto-generated method stub
-      
     }
       
   }
-      
-    
-    private class VertiemposActionListener implements ActionListener
-  {
+  
+  private class VertiemposActionListener implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      // TODO Auto-generated method stub
-      
-      
       vertiempos_pressed = true;
-      
       time_corte = tiempos_corte_j.getText();
       lvl_corte = Integer.valueOf(nivel_corte.getText());
-      
       tiempos_corte = time_corte.split("-");
-      
-        
-      
-      if (lvl_corte > 0 && lvl_corte< zs)
-      {
+      if (lvl_corte > 0 && lvl_corte< zs) {
         flag_breaker=false;
         validar_variables = false;
-        
-        //System.out.println("Tiempos corte del formulario : "+time_corte+ " corte " +lvl_corte );
-        //System.out.println("1 tiempo "+ Integer.parseInt(tiempos_corte[0]));
-        
       }
-      else
-      {
-        
+      else {
         IJ.showMessage("El nivel de corte ingresado es incorrecto \nDebe ser un valor entre "+ 0 + " y "+ zs);
-        
       }
       
       int sizethis= tiempos_corte.length;
-      //System.out.println("Tamano del tiempos corte "+ sizethis);
-      
       parser = new int[sizethis];
       
-      for(int x =0; x < sizethis; x++)
-      {
-        if(!tiempos_corte[x].equals(" ") && !tiempos_corte[x].equals(""))
-        {
-          //System.out.println("Valor es "+ Integer.parseInt(tiempos_corte[x]));
+      for(int x = 0; x < sizethis; x++) {
+        if(!tiempos_corte[x].equals(" ") && !tiempos_corte[x].equals("")) {
           parser[parser_count] = Integer.parseInt(tiempos_corte[x]);
-
-          parser_count++;  
+          parser_count++;
         }
       }
-      
-      //System.out.println("En realidad los numeros son "+ parser_count  );
       enable_scroll_change = true;
-      
-      
-      //IJ. log("The user clicked on the 'Yes' button"); 
-         roll =  new double[parser_count][9];
-        
-        for (int tps = 0; tps < parser_count; tps++ )
-        {
-          for (int points = 0; points < 9; points++ )
-          {
-            roll[tps][points] = lvl_corte;
-            //System.out.println("Valor de Roll de X: "+tps +" // Y: "+ points+" es "+ roll[tps][points]);
-            
-          }
-          
+      roll =  new double[parser_count][9];
+      for (int tps = 0; tps < parser_count; tps++) {
+        for (int points = 0; points < 9; points++) {
+          roll[tps][points] = lvl_corte;            
         }
-        
-       anterior = new int [parser_count][9];
-       siguiente = new int [parser_count][9];
-      
-       
-       
-       for (int x = 0; x<parser_count; x++)
-       {
-         for (int y = 0; y<9;y++)
-         {
-           anterior [x][y]= lvl_corte;
-           siguiente [x][y]= lvl_corte;
-         }
-       }
+      }
+      anterior = new int [parser_count][9];
+      siguiente = new int [parser_count][9];
+      for (int x = 0; x < parser_count; x++) {
+        for (int y = 0; y < 9;y++) {
+          anterior [x][y]= lvl_corte;
+          siguiente [x][y]= lvl_corte;
+        }
+      }
       
       //////// CICLO PARA GENERAR TODOS LOS TIEMPOS 
+      Xlvl = new int [2];
+      Ylvl = new int [2];
       
+      Inter1 = new int [3];
+      Inter2 = new int [3];
+      Inter3 = new int [3];
       
+      int Xsetpoints = width/6;
+      int Ysetpoints = height/6;
       
-       Xlvl = new int [2];
-       Ylvl = new int [2];
-       
-       Inter1 = new int [3];
-       Inter2 = new int [3];
-       Inter3 = new int [3];
-       
-       int Xsetpoints = width/6;
-         int Ysetpoints = height/6;
-         
-         Xlvl[0] = Xsetpoints * 2;
-         Xlvl[1] = (Xsetpoints * 4);
-         Ylvl[0] = Ysetpoints * 2;
-         Ylvl[1] = (Ysetpoints * 4);
-         
-         Inter1[0] = Xsetpoints;
-         Inter1[1] = Xsetpoints * 3;
-         Inter1[2] = Xsetpoints * 5;
-         
-         Inter2[0] = Ysetpoints;
-         Inter2[1] = Ysetpoints * 3;
-         Inter2[2] = Ysetpoints * 5;
-        
-         calcular_borrado_inicial(parser,parser_count,choice);
-       //calcular_borrado_scroll(parser,parser_count,choice);
-        
-            
-         ZProjector projector = new ZProjector(imageprev); 
-        //System.out.println("Paso 3");
-        
-        projector.setMethod(ZProjector.MAX_METHOD);
-                   
-         //proyectar sobre todo z 
-        projector.setStartSlice(1 + (1-1)*zs);
-        projector.setStopSlice(1*zs);
-        projector.doProjection();
-        
-        ImagePlus projections = projector.getProjection();
-          
-        //projections.setWindow(new Window(projections, projections.getCanvas())); 
-        Stack_Tp.setWindow(new Window(Stack_Tp, Stack_Tp.getCanvas())); 
-          
-         
-          overlay = new Overlay();
-          numberoverlay = new Overlay();
-          
-          font = new Font("", Font.PLAIN, 24);
-         ////////////////////////////////////
-          ///// AGREGAR LA SLICEROI
-          
-          
-          
-           
-          stack_roi = new Roi[parser_count][9]; 
-          
-          
-          llenar_overlay();
-          //System.out.println("Llenar overlay FINAL LABEL");
-           
-            win = Stack_Tp.getWindow();
-            canvas = win.getCanvas();
-            win.removeKeyListener(IJ.getInstance());
-            canvas.removeKeyListener(IJ.getInstance());
-            win.addKeyListener(new WinKeyListener());
-            canvas.addKeyListener(new WinKeyListener());
-            ImagePlus.addImageListener(new IpImageListener());
-           // IJ.log("addKeyListener");
-          
-          screenmod = true;
+      Xlvl[0] = Xsetpoints * 2;
+      Xlvl[1] = (Xsetpoints * 4);
+      Ylvl[0] = Ysetpoints * 2;
+      Ylvl[1] = (Ysetpoints * 4);
       
-          
-          
-          
-        lblTiemposDeCorte.setEnabled(false);
-        
-        tiempos_corte_j.setEnabled(false);
-    
-        lblNivelDeCorte.setEnabled(false);
-        
-        nivel_corte.setEnabled(false);
-                        
-        lblFactorDeCorte.setEnabled(false);
-        
-        menorrad.setEnabled(false);
-            
-        mayorrad.setEnabled(false);
-        
-        lblMostrarParaTodos.setEnabled(false);
-        
-        ver_tiempos.setEnabled(false);
+      Inter1[0] = Xsetpoints;
+      Inter1[1] = Xsetpoints * 3;
+      Inter1[2] = Xsetpoints * 5;
+
+      Inter2[0] = Ysetpoints;
+      Inter2[1] = Ysetpoints * 3;
+      Inter2[2] = Ysetpoints * 5;
       
+      calcular_borrado_inicial(parser,parser_count,choice);
+      ZProjector projector = new ZProjector(imageprev); 
+      projector.setMethod(ZProjector.MAX_METHOD);
+      projector.setStartSlice(1 + (1-1)*zs);
+      projector.setStopSlice(1*zs);
+      projector.doProjection();
+      ImagePlus projections = projector.getProjection();
+      Stack_Tp.setWindow(new Window(Stack_Tp, Stack_Tp.getCanvas())); 
+      overlay = new Overlay();
+      numberoverlay = new Overlay();
+      font = new Font("", Font.PLAIN, 24);
       
-    }
-      
+      ////////////////////////////////////
+      ///// AGREGAR LA SLICEROI
+      stack_roi = new Roi[parser_count][9]; 
+      llenar_overlay();
+      win = Stack_Tp.getWindow();
+      canvas = win.getCanvas();
+      win.removeKeyListener(IJ.getInstance());
+      canvas.removeKeyListener(IJ.getInstance());
+      win.addKeyListener(new WinKeyListener());
+      canvas.addKeyListener(new WinKeyListener());
+      ImagePlus.addImageListener(new IpImageListener());
+      screenmod = true;
+      lblTiemposDeCorte.setEnabled(false);
+      tiempos_corte_j.setEnabled(false);
+      lblNivelDeCorte.setEnabled(false);
+      nivel_corte.setEnabled(false);
+      lblFactorDeCorte.setEnabled(false);
+      menorrad.setEnabled(false);
+      mayorrad.setEnabled(false);
+      lblMostrarParaTodos.setEnabled(false);
+      ver_tiempos.setEnabled(false);
+    }  
   }
     
-  private class MenorqueActionListener implements ActionListener
-  {
+  private class MenorqueActionListener implements ActionListener {
 
     public void actionPerformed(ActionEvent e) {
-      // TODO Auto-generated method stub
-      
-      if(menorrad.isSelected())
-      {
+      if (menorrad.isSelected()) {
         mayorrad.setSelected(false);
-        choice="<";
+        choice = "<";
       }
-      
-      
     }
-    
   }
 
-  private class MayorqueActionListener implements ActionListener
-  {
+  private class MayorqueActionListener implements ActionListener {
 
-    public void actionPerformed(ActionEvent e) 
-    {
-      // TODO Auto-generated method stub
-      
-    if(mayorrad.isSelected())
-    {
-      menorrad.setSelected(false);
-      choice=">";
-      
+    public void actionPerformed(ActionEvent e)  {
+      if(mayorrad.isSelected()) {
+        menorrad.setSelected(false);
+        choice=">";
+      }
     }
-      
-      
-    }
-
   }  
   
-  private class CancelButton implements ActionListener
-  {
+  private class CancelButton implements ActionListener {
 
-    public void actionPerformed(ActionEvent e) 
-    {
-      // TODO Auto-generated method stub
-    
-    //System.exit(0);  
-    //IJ.run("Exit");
-    Ventana.setVisible(false);
+    public void actionPerformed(ActionEvent e) {
+      Ventana.setVisible(false);
       return;
-    
-      
     }
-
   }
 
-  private class WinKeyListener implements KeyListener
-  {
+  private class WinKeyListener implements KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
-      // TODO Auto-generated method stub
-      
       int keyCode = e.getKeyCode();
-          char keyChar = e.getKeyChar();
-          int flags = e.getModifiers();
-          String keytex = KeyEvent.getKeyText(keyCode);
-      
-          if (keytex.equals("Ctrl"))
-          {
-            
-                        
-            crtlpress =  true;
-            for (int x = 0; x < 9; x++)
-            {
-              anterior[currentslice][x] = siguiente[currentslice][x];
-            }
-          }
-          
-          
-          //((Stack_Tp.getCurrentSlice()) -1 )
-
+      char keyChar = e.getKeyChar();
+      int flags = e.getModifiers();
+      String keytex = KeyEvent.getKeyText(keyCode);
+      if (keytex.equals("Ctrl")) {
+        crtlpress =  true;
+        for (int x = 0; x < 9; x++) {
+          anterior[currentslice][x] = siguiente[currentslice][x];
+        }
+      }
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
-      // TODO Auto-generated method stub
       int keyCode = e.getKeyCode();
       String keytex = KeyEvent.getKeyText(keyCode);
-       
-          
-       if (keytex.equals("Ctrl"))
-            {
-            
-              crtlpress =  false;
-              
-              for (int x = 0; x < 9; x++)
-              {
-                siguiente[currentslice][x] = (int) roll[currentslice][x];
-                  
-              }
-              
-              
-              //System.out.println("Anterior "+ anterior[currentslice][1] +" Siguiente "+ siguiente[currentslice][1]);
-              
-              if(anterior[currentslice][0] != siguiente[currentslice][0] || anterior[currentslice][1] != siguiente[currentslice][1] || anterior[currentslice][2] != siguiente[currentslice][2] 
-                  || anterior[currentslice][3] != siguiente[currentslice][3] || anterior[currentslice][4] != siguiente[currentslice][4] || 
-                  anterior[currentslice][5] != siguiente[currentslice][5] || anterior[currentslice][6] != siguiente[currentslice][6] || 
-                  anterior[currentslice][7] != siguiente[currentslice][7] || anterior[currentslice][8] != siguiente[currentslice][8])
-              {
-                //System.out.println("Hay que hacer la wea");
-                //System.out.println("Coordenas X prueba "+ Inter1[0]+" / "+ Inter1[1]+" / "+ Inter1[2] );
-                //System.out.println("Coordenas Y prueba "+ Inter2[0]+" / "+ Inter2[1]+" / "+ Inter2[2] );
-                
-                //System.out.println("Valor Xlvl"+Xlvl[0] +" / "+Xlvl[1]);
-                
-                
-                long time_start, time_end;
-                time_start = System.currentTimeMillis();
-                
-                calcular_borrado_scroll(parser,parser_count,choice);
-                time_end = System.currentTimeMillis();
-                System.out.println("Tiempo "+ ( time_end - time_start )+" mili");
-                
-                
-                
-                
-                
-              }
-            }
-             
-
+      if (keytex.equals("Ctrl")) {
+        crtlpress =  false;
+        for (int x = 0; x < 9; x++) {
+          siguiente[currentslice][x] = (int) roll[currentslice][x];
+        }
+        if(anterior[currentslice][0] != siguiente[currentslice][0] || anterior[currentslice][1] != siguiente[currentslice][1] || anterior[currentslice][2] != siguiente[currentslice][2] 
+            || anterior[currentslice][3] != siguiente[currentslice][3] || anterior[currentslice][4] != siguiente[currentslice][4] || 
+            anterior[currentslice][5] != siguiente[currentslice][5] || anterior[currentslice][6] != siguiente[currentslice][6] || 
+            anterior[currentslice][7] != siguiente[currentslice][7] || anterior[currentslice][8] != siguiente[currentslice][8]) {
+          long time_start, time_end;
+          time_start = System.currentTimeMillis();
+          calcular_borrado_scroll(parser,parser_count,choice);
+          time_end = System.currentTimeMillis();
+          System.out.println("Tiempo "+ ( time_end - time_start )+" mili");
+        }
+      }
     }
 
     @Override
     public void keyTyped(KeyEvent e) {
-      // TODO Auto-generated method stub
-      
-    }
-
-    
-    
+    }   
   }
   
-  
-  private class IpImageListener implements ImageListener
-  {
+  private class IpImageListener implements ImageListener {
 
     @Override
     public void imageClosed(ImagePlus e) {
-      // TODO Auto-generated method stub
-      
     }
 
     @Override
     public void imageOpened(ImagePlus e) {
-      // TODO Auto-generated method stub
-      
     }
 
     @Override
     public void imageUpdated(ImagePlus e) {
-      // TODO Auto-generated method stub
-      
-    //  System.out.println("ASDASDasdasdasd");
-      
-      currentslice= ((Stack_Tp.getCurrentSlice()) -1 );
-        
+      currentslice= ((Stack_Tp.getCurrentSlice()) -1);
       overlay.clear();
       llenar_overlay();
     }
-
   }
   
-    
-
-
-  public void imageClosed(ImagePlus e) {
-    
+  public void imageClosed(ImagePlus e) {  
   }
-
 
   @Override
   public void imageOpened(ImagePlus e) {
-    
   }
-
 
   @Override
   public void imageUpdated(ImagePlus e) {
-    
-    
-    
-    
-    
   }
-
 
   @Override
   public void keyPressed(KeyEvent e) {
-    // TODO Auto-generated method stub
-    
   }
-
 
   @Override
   public void keyReleased(KeyEvent e) {
-    // TODO Auto-generated method stub
-    
   }
-
 
   @Override
   public void keyTyped(KeyEvent e) {
-    // TODO Auto-generated method stub
-    
   }
-
 
   @Override
   public void update(Observable o, Object arg) {
-    // TODO Auto-generated method stub
-    
   }
-   public static void main(String[] args) {
-      // NO AGREGAR MAS LINEAS EN EL MAIN
-      new ImageJ();
-      System.out.println("Working Directory = " + System.getProperty("user.dir"));
-      //ImagePlus image = IJ.openVirtual("Z:/Eclipse/Fijithelium/examples/Stack/video_animal1.tif");
-      //ImagePlus image = IJ.openVirtual("Z:/Eclipse/Fijithelium/examples/stack_t001.tif");
-      //ImagePlus image = IJ.openVirtual("Z:/Eclipse/Fijithelium/examples/Stack/stack_t01-t10.tif");
-      
-      ImagePlus image = IJ.openVirtual("C:/Users/Alejandro/Desktop/java/epithelium-projection/examples/sshort sequence-1.tif");
-      
-      
-      
-      
-      IJ.runPlugIn(image, "Proyeccion_General_Final", "parameter=value");
-      // image.show();
-       WindowManager.addWindow(image.getWindow());
-    }
+
+  public static void main(String[] args) {
+    new ImageJ();
+    System.out.println("Working Directory = " + System.getProperty("user.dir"));
+    ImagePlus image = IJ.openVirtual("C:/Users/Alejandro/Desktop/java/epithelium-projection/examples/sshort sequence-1.tif");      
+    IJ.runPlugIn(image, "Proyeccion_General_Final", "parameter=value");
+    WindowManager.addWindow(image.getWindow());
+  }
 }
