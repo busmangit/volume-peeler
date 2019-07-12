@@ -158,7 +158,6 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
   public int setup(String arg, ImagePlus imp) {
     return STACK_REQUIRED | DOES_ALL ;
   }
-        
       
   public void run (ImageProcessor ip) {
     image = WindowManager.getCurrentImage(); 
@@ -181,7 +180,6 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
     // aca empieza la magia 
     SliderWind(); 
   }
-    
     
   // Se construye el overlay con las lineas, numeros, y puntos demarcados 
   // por sobe la imagen sin afectar su integridad
@@ -407,8 +405,8 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
      Stack_Tp.show();
   }
 
-//////////////////// MODIFICAR PREVIE TIEMPOS CON SCROLL , ///////////////////////
-////////////////////    lo mismo que el anterior pero se llama cada vez que hay un cambio   ////////////////
+  //////////////////// MODIFICAR PREVIE TIEMPOS CON SCROLL , ///////////////////////
+  ////////////////////    lo mismo que el anterior pero se llama cada vez que hay un cambio   ////////////////
   private static void calcular_borrado_scroll (int [] parser, int parser_count, String choice) {
     float [] vec1, vec2, vec3, vec4, vec5, vec6;
     
@@ -1145,7 +1143,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
     cancel.setBounds(170, 397, 97, 25);
     Ventana.add(cancel);
     Ventana.setVisible(true);
-    
+
     int canwin = 0;
     return canwin;
   }

@@ -54,8 +54,8 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
 
   private void initSourcePixels(ImagePlus imp) {
     this.sourcePixels = new byte[this.pixelsPerFrame * this.nFrames];
-    for (int s = 0; s < this.nSlices; s++) {
-      imp.setSlice(s + 1);
+    for (int s = 1; s <= this.nSlices * this.nFrames; s++) {
+      imp.setSlice(s);
       byte[] pixels = (byte[])imp.getProcessor().getPixelsCopy();
       int zoffset = this.pixelsPerSlice * s;
       for (int i = 0; i < this.height; i++) {
@@ -81,6 +81,7 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
   }
 
   private float[] getDistanceMap(int frame, Point center) {
+    System.out.println("frame " + frame + " center.z " + center.z);
     float[] map = new float[this.pixelsPerFrame];
     Point currentPoint = new Point(0, 0, 0);
     for (int i = this.pixelsPerFrame * (frame - 1), j = 0; i < this.pixelsPerFrame * frame; i++, j++) {
@@ -120,12 +121,12 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
   }
   
   private int pixelsOverThreshold(int frame, int slice, int start) {
-    int frameOffset = (frame - 1) * this.pixelsPerFrame + (slice - 1) * this.pixelsPerSlice;
+    int sliceOffset = (frame - 1) * this.pixelsPerFrame + (slice - 1) * this.pixelsPerSlice;
     int cnt = 0;
     for (int i = 0; i < height; i++) {
-      int columnOffset = i * width + frameOffset;
+      int offset = i * width + sliceOffset;
       for (int j = 0; j < width; j++) {
-        byte val = this.sourcePixels[columnOffset + j];
+        byte val = this.sourcePixels[offset + j];
         if (val > threshold || val < 0) {
           auxPointsArray[start + cnt++] = new Point(j, i, slice - 1);
         }
@@ -158,7 +159,7 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     if (okPressed) {
       System.out.println("OK");
       processAllFrames();
-    } 
+    }
   }
 
   private void showPreview(double proportion) {
@@ -192,24 +193,25 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     for (int i = 0; i < this.pixelsPerFrame; i += this.pixelsPerSlice) {
       byte[] slice = new byte[this.pixelsPerSlice];
       for (int j = 0; j < this.pixelsPerSlice; j++) {
-        int pos = frameOffset + j + i;
-        //slice[j] = distanceMap[pos] > radiusToKeep ? 0 : this.sourcePixels[pos];
-        slice[j] = distanceMap[pos - frameOffset] > radiusToKeep ? 0 : this.sourcePixels[pos];
+        int pos = j + i;
+        slice[j] = distanceMap[pos] > radiusToKeep ? 0 : this.sourcePixels[pos + frameOffset];
       }
       stack.addSlice("Slice " + i, slice);
     }
     return stack;
   }
-
+  
   private void processAllFrames() {
     ImageStack resultsStack = new ImageStack(this.width, this.height);
     for (int frame = 1; frame <= nFrames; frame++) {
       System.out.println("Procesando frame " + frame);
-      Sphere est = sphereEstimation(voxelsOverThreshold(frame));
-      ImageStack sphere = cropSphere(frame, est.r * proportion, getDistanceMap(frame, est.center));
+      int vot = voxelsOverThreshold(frame);
+      System.out.println("Voxeles sobre umbral " + vot);
+      Sphere est = sphereEstimation(vot);
+      ImageStack sphereStack = cropSphere(frame, est.r * this.proportion, getDistanceMap(frame, est.center));
       /*ColorProcessor ipc = drawEstimations(getZProjectionProcessor(sphere));
       resultsStack.addSlice(ipc);*/
-      resultsStack.addSlice(getZProjectionProcessor(sphere));
+      resultsStack.addSlice(getZProjectionProcessor(sphereStack));
     }
     ImagePlus impstack = new ImagePlus("Result", resultsStack);
     impstack.show();
