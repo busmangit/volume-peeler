@@ -54,10 +54,10 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
 
   private void initSourcePixels(ImagePlus imp) {
     this.sourcePixels = new byte[this.pixelsPerFrame * this.nFrames];
-    for (int s = 1; s <= this.nSlices * this.nFrames; s++) {
-      imp.setSlice(s);
+    for (int slice = 0; slice < this.nSlices * this.nFrames; slice++) {
+      imp.setSlice(slice);
       byte[] pixels = (byte[])imp.getProcessor().getPixelsCopy();
-      int zoffset = this.pixelsPerSlice * s;
+      int zoffset = this.pixelsPerSlice * slice;
       for (int i = 0; i < this.height; i++) {
         int yoffset = i * this.width;
         for (int j = 0; j < this.width; j++) {
@@ -85,9 +85,10 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     float[] map = new float[this.pixelsPerFrame];
     Point currentPoint = new Point(0, 0, 0);
     for (int i = this.pixelsPerFrame * (frame - 1), j = 0; i < this.pixelsPerFrame * frame; i++, j++) {
-      currentPoint.x = i % this.width;
-      currentPoint.y = (i / this.width) % this.height;
-      currentPoint.z = i / this.pixelsPerSlice;
+      int indexInFrame = i % this.pixelsPerFrame;
+      currentPoint.x = indexInFrame % this.width;
+      currentPoint.y = (indexInFrame / this.width) % this.height;
+      currentPoint.z = indexInFrame / this.pixelsPerSlice;
       map[j] = (float)realDist(currentPoint, center);
     }
     return map;
@@ -186,17 +187,18 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     projector.doProjection();
     return projector.getProjection().getProcessor();
   }
-
-  private ImageStack cropSphere(int frame, double radiusToKeep, float[] distanceMap) {
+  
+  private ImageStack cropSphere(int frame, double radiusToKeep, float[] frameDistanceMap) {
     ImageStack stack = new ImageStack(this.width, this.height);
     int frameOffset = (frame - 1) * this.pixelsPerFrame;
-    for (int i = 0; i < this.pixelsPerFrame; i += this.pixelsPerSlice) {
-      byte[] slice = new byte[this.pixelsPerSlice];
+    for (int slice = 1; slice <= this.nSlices; slice++) {
+      byte[] pixels = new byte[this.pixelsPerSlice];
+      int offset = (slice - 1) * this.pixelsPerSlice;
       for (int j = 0; j < this.pixelsPerSlice; j++) {
-        int pos = j + i;
-        slice[j] = distanceMap[pos] > radiusToKeep ? 0 : this.sourcePixels[pos + frameOffset];
+        int pos = offset + j;
+        pixels[j] = frameDistanceMap[pos] > radiusToKeep ? 0 : this.sourcePixels[pos + frameOffset];
       }
-      stack.addSlice("Slice " + i, slice);
+      stack.addSlice("Slice " + slice, pixels);
     }
     return stack;
   }
@@ -209,8 +211,8 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
       System.out.println("Voxeles sobre umbral " + vot);
       Sphere est = sphereEstimation(vot);
       ImageStack sphereStack = cropSphere(frame, est.r * this.proportion, getDistanceMap(frame, est.center));
-      /*ColorProcessor ipc = drawEstimations(getZProjectionProcessor(sphere));
-      resultsStack.addSlice(ipc);*/
+      ColorProcessor ipc = drawEstimations(getZProjectionProcessor(sphereStack));
+      resultsStack.addSlice(ipc);
       resultsStack.addSlice(getZProjectionProcessor(sphereStack));
     }
     ImagePlus impstack = new ImagePlus("Result", resultsStack);

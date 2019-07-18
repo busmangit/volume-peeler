@@ -52,8 +52,6 @@ import javax.swing.border.EmptyBorder;
 
 public class Proyeccion_General_Final extends JFrame implements PlugInFilter, KeyListener, ImageListener, Observer {
 
-  static double scroll;
-  
   private static int tiempos;
   private static String direc;
   private static String imagedir;
@@ -61,42 +59,27 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
   private static int width;
   private static int height;
   private static int zs;
-  private static int [] Xlvl;
-  private static int [] Ylvl;
+  private static int[] Xlvl;
+  private static int[] Ylvl;
   
-  private static int [] Inter1;
-  private static int [] Inter2;
-  private int [] Inter3;
+  private static int[] Inter1;
+  private static int[] Inter2;
+  private int[] Inter3;
   private boolean screenmod = false;
   
   static double wheel = 0;
-  static double [] [] roll;
+  static double[][] roll;
   
   private static Robot robot = null;
   private static Overlay overlay;
-  private static Overlay crossverlay;
-  private static Overlay numberoverlay;
 
-  private static Roi roi; // puntos X para mostrar el punto de interpolacion
-  
-  private static Roi roic1; //
-  private static Roi roic2; //
-  private static Roi roic3; //
-  private static Roi roic4; // rois para
-  private static Roi roic5; // mostrar el 
-  private static Roi roic6; // valor de Z
-  private static Roi roic7; //
-  private static Roi roic8; //
-  private static Roi roic9; //
-  
-  private static Roi [] [] stack_roi;
+  private static Roi roi; // puntos X para mostrar el punto de interpolacion  
+  private static Roi[][] stack_roi;
   private static Roi roigrid; // Grid en rojo
   
   //private static NonBlockingGenericDialog gd;
   static ImagePlus imageprev;
-  
   protected ImageStack stack;
-  private ImagePlus imp;
 
   static SplineFitter sf1;   
   static SplineFitter sf2;
@@ -116,7 +99,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
   
   private boolean validar_variables = true;
   private String[] tiempos_corte;
-  private int [] parser;
+  private int[] parser;
   private String choice = "<";
     
   ////////////////////////////////////////////////////////
@@ -180,6 +163,13 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
     // aca empieza la magia 
     SliderWind(); 
   }
+
+  private static void dibujarLinea(int x1, int y1, int x2, int y2) {
+    roigrid = new Line(x1, y1, x2, y2); 
+    roigrid.setStrokeColor(Color.red);  // Primer vertical entre 100 y 709
+    roigrid.setStrokeWidth(1);
+    overlay.add(roigrid);
+  }
     
   // Se construye el overlay con las lineas, numeros, y puntos demarcados 
   // por sobe la imagen sin afectar su integridad
@@ -195,25 +185,10 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
     }
      
     // Las lineas
-    roigrid = new Line(Xlvl[0],0,Xlvl[0],height); 
-    roigrid.setStrokeColor(Color.red);  // Primer vertical entre 100 y 709
-    roigrid.setStrokeWidth(1);
-    overlay.add(roigrid);
-    
-    roigrid = new Line(Xlvl[1],0,Xlvl[1],height);
-    roigrid.setStrokeColor(Color.red); // Segunda Vertical entre 709 y 1234
-    roigrid.setStrokeWidth(1);
-    overlay.add(roigrid);
-    
-    roigrid = new Line(0,Ylvl[0],width,Ylvl[0]); 
-    roigrid.setStrokeColor(Color.red);  // Primer Horizontal entre 60 y 456
-    roigrid.setStrokeWidth(1);
-    overlay.add(roigrid);
-    
-    roigrid = new Line(0,Ylvl[1],width,Ylvl[1]);
-    roigrid.setStrokeColor(Color.red); // Segunda Horizontal entre 456 y 892
-    roigrid.setStrokeWidth(1);  
-    overlay.add(roigrid);
+    dibujarLinea(Xlvl[0], 0, Xlvl[0], height); // Primer vertical entre 100 y 709
+    dibujarLinea(Xlvl[1], 0, Xlvl[1], height); // Segunda Vertical entre 709 y 1234
+    dibujarLinea(0, Ylvl[0], width, Ylvl[0]); // Primer Horizontal entre 60 y 456
+    dibujarLinea(0, Ylvl[1], width, Ylvl[1]); // Segunda Horizontal entre 456 y 892
      
     //  Los numeros de Z
     //1
@@ -361,7 +336,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
         zlabel.putPixelValue(X,(Y+Inter2[1]),vectorspl2[Y]);
         if (X==1234) { 
           //System.out.println("Inicio vector Y = "+(Y+Inter2[1])+" // z="+ spline4);
-          }
+        }
       }
     }
     ImageStack stack_tiempos = new ImageStack(width, height);   
@@ -542,7 +517,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
     robot.mousePress(MouseEvent.BUTTON1_MASK);
     robot.mouseRelease(MouseEvent.BUTTON1_MASK);  
   }
-    
+  
   /// Misma funcion, considerando que no se seleccionaron tiempos antes.
   private static void calcular_borrado_totalsintiempo(int [] parser, int parser_count, String choice) {      
     ImageStack stack_tiempos = new ImageStack(width, height);   
@@ -791,7 +766,6 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
         if (getCanvas().cursorOverImage()) {   
           int zoom = event.getWheelRotation(); 
           String cadena = "";
-          System.out.println("Esta en la SLice :" +Stack_Tp.getCurrentSlice());  
           Point point = getCanvas().getMousePosition();
           double magnificacion = (double) getCanvas().getMagnification();
           int Xcursor = (int) (((point.getX() * 1)) / magnificacion);
@@ -799,15 +773,12 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
           //////////////////////////////////////////////////////////////////////////////
           // PUNTO 1//
           if (Xcursor>=0 && Xcursor<= Xlvl[0] && Ycursor>=0 && Ycursor<= Ylvl[0] && crtlpress) {
+            System.out.println("punto 1");
             if (zoom < 0) {  
               int intcadena = (int) (roll[currentslice][0]);
               cadena = String.valueOf(intcadena);  
               if (intcadena< zs) {
-                //System.out.println("Int cadena " + intcadena);
                 roll[currentslice][0] +=1;
-                //System.out.println("Valor slice"+ (currentslice - 2)+" roll: "+ roll[(currentslice-2)][0]);  
-                //System.out.println("Valor slice"+ (currentslice - 1)+" roll: "+ roll[(currentslice-1)][0]);  
-                //System.out.println("Valor slice"+ (currentslice)+" roll: "+ roll[currentslice][0]); 
               }
               robot.delay(1);
               robot.mousePress(MouseEvent.BUTTON1_MASK);
@@ -819,7 +790,6 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
               int intcadena = (int) (roll[currentslice][0]);
               cadena = String.valueOf(intcadena);  
               if (intcadena>1) {
-                 //System.out.println("Int cadena " + intcadena);
                 roll[currentslice][0] -=1;
               }
               robot.delay(1);
@@ -829,7 +799,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
               llenar_overlay();
             }
           }     
-                           
+          
           /////////////////////////////////////////////////
           // PUNTO 2//
           if (Xcursor>=Xlvl[0] && Xcursor<= Xlvl[1] && Ycursor>=0 && Ycursor<= Ylvl[0] && crtlpress) {
@@ -1353,7 +1323,6 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
       ImagePlus projections = projector.getProjection();
       Stack_Tp.setWindow(new Window(Stack_Tp, Stack_Tp.getCanvas())); 
       overlay = new Overlay();
-      numberoverlay = new Overlay();
       font = new Font("", Font.PLAIN, 24);
       
       ////////////////////////////////////
