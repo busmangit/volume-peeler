@@ -50,7 +50,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
-public class Proyeccion_General_Final extends JFrame implements PlugInFilter, KeyListener, ImageListener, Observer {
+public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
 
   private static int tiempos;
   private static String direc;
@@ -101,8 +101,6 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
   private String[] tiempos_corte;
   private int[] parser;
   private String choice = "<";
-    
-  ////////////////////////////////////////////////////////
 
   private int parser_count=0;
 
@@ -139,10 +137,10 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
   private static ImageProcessor zlabel;
   
   public int setup(String arg, ImagePlus imp) {
-    return STACK_REQUIRED | DOES_ALL ;
+    return STACK_REQUIRED | DOES_ALL;
   }
       
-  public void run (ImageProcessor ip) {
+  public void run(ImageProcessor ip) {
     image = WindowManager.getCurrentImage(); 
     ImagePlus img2 = image;
     stack = img2.getStack();
@@ -162,6 +160,74 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
   
     // aca empieza la magia 
     SliderWind(); 
+  }
+  
+  /// La ventana principal del menu de seleccion de valores
+  public void SliderWind() {
+    Ventana = new JFrame();
+    Ventana.setTitle("Ventana de prueba");
+    Ventana.setSize(400,450);
+    Ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    Ventana.setBounds(400, 450, 426, 482);
+    Ventana.setLocationRelativeTo(null);
+    Ventana.setLayout(null);
+    
+    lblTiemposDeCorte = new JLabel("Tiempos de Corte");
+    lblTiemposDeCorte.setBounds(71, 42, 130, 33);
+    Ventana.add(lblTiemposDeCorte);
+    
+    tiempos_corte_j = new JTextField();
+    tiempos_corte_j.setText("1-2");
+    tiempos_corte_j.setBounds(241, 47, 116, 22);
+    Ventana.add(tiempos_corte_j);
+    tiempos_corte_j.setColumns(10);
+    
+    lblNivelDeCorte = new JLabel("Nivel de Corte");
+    lblNivelDeCorte.setBounds(71, 88, 130, 33);
+    Ventana.add(lblNivelDeCorte);
+    
+    nivel_corte = new JTextField();
+    nivel_corte.setText(String.valueOf(zs/2));
+    nivel_corte.setColumns(10);
+    nivel_corte.setBounds(241, 93, 116, 22);
+    Ventana.add(nivel_corte);
+    
+    panel = new JPanel();
+    panel.setBorder(null);
+    panel.setBounds(38, 162, 341, 106);
+    Ventana.add(panel);
+    panel.setLayout(null);
+    
+    lblFactorDeCorte = new JLabel("Factor de Corte");
+    lblFactorDeCorte.setBounds(23, 34, 89, 16);
+    panel.add(lblFactorDeCorte);
+    
+    menorrad = new JRadioButton("Menor que \"<\"");
+    menorrad.addActionListener(new MenorqueActionListener());
+    menorrad.setSelected(true);
+    menorrad.setBounds(195, 9, 127, 25);
+    panel.add(menorrad);
+        
+    mayorrad = new JRadioButton("Mayor que \">\"");
+    mayorrad.addActionListener(new MayorqueActionListener());
+    mayorrad.setBounds(195, 54, 127, 25);
+    panel.add(mayorrad);
+    
+    ver_tiempos = new JButton("Preview");
+    ver_tiempos.addActionListener(new VertiemposActionListener());
+    ver_tiempos.setBounds(269, 288, 97, 25);
+    Ventana.add(ver_tiempos);
+    
+    ver_todos = new JButton("Begin");
+    ver_todos.addActionListener(new VertodosActionListener());
+    ver_todos.setBounds(103, 349, 194, 25);
+    Ventana.add(ver_todos);
+    
+    lblMostrarParaTodos = new JLabel("Mostrar tiempos seleccionados");
+    lblMostrarParaTodos.setBounds(68, 289, 189, 22);
+    Ventana.add(lblMostrarParaTodos);
+
+    Ventana.setVisible(true);
   }
 
   private static void dibujarLinea(int x1, int y1, int x2, int y2) {
@@ -183,7 +249,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
          roi.setStrokeColor(Color.CYAN);
        }
     }
-     
+    
     // Las lineas
     dibujarLinea(Xlvl[0], 0, Xlvl[0], height); // Primer vertical entre 100 y 709
     dibujarLinea(Xlvl[1], 0, Xlvl[1], height); // Segunda Vertical entre 709 y 1234
@@ -1039,87 +1105,6 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
       }   
     }
   }
-  
-  /// La ventana principal del menu de seleccion de valores
-  public int SliderWind() {
-    Ventana = new JFrame();
-    Ventana.setTitle("Ventana de prueba");
-    Ventana.setSize(400,450);
-    Ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    Ventana.setBounds(400, 450, 426, 482);
-    Ventana.setLocationRelativeTo(null);
-    Ventana.setLayout(null);
-    
-    lblTiemposDeCorte = new JLabel("Tiempos de Corte");
-    lblTiemposDeCorte.setBounds(71, 42, 130, 33);
-    Ventana.add(lblTiemposDeCorte);
-    
-    tiempos_corte_j = new JTextField();
-    tiempos_corte_j.setText("1-2");
-    tiempos_corte_j.addKeyListener(new TiemposcorteKeyListener());
-    tiempos_corte_j.setBounds(241, 47, 116, 22);
-    Ventana.add(tiempos_corte_j);
-    tiempos_corte_j.setColumns(10);
-    
-    lblNivelDeCorte = new JLabel("Nivel de Corte");
-    lblNivelDeCorte.setBounds(71, 88, 130, 33);
-    Ventana.add(lblNivelDeCorte);
-    
-    nivel_corte = new JTextField();
-    nivel_corte.setText(String.valueOf(zs/2));
-    nivel_corte.addKeyListener(new NivelcorteKeyListener());
-    nivel_corte.setColumns(10);
-    nivel_corte.setBounds(241, 93, 116, 22);
-    Ventana.add(nivel_corte);
-    
-    panel = new JPanel();
-    panel.setBorder(null);
-    panel.setBounds(38, 162, 341, 106);
-    Ventana.add(panel);
-    panel.setLayout(null);
-    
-    lblFactorDeCorte = new JLabel("Factor de Corte");
-    lblFactorDeCorte.setBounds(23, 34, 89, 16);
-    panel.add(lblFactorDeCorte);
-    
-    menorrad = new JRadioButton("Menor que \"<\"");
-    menorrad.addActionListener(new MenorqueActionListener());
-    menorrad.setSelected(true);
-    menorrad.setBounds(195, 9, 127, 25);
-    panel.add(menorrad);
-        
-    mayorrad = new JRadioButton("Mayor que \">\"");
-    mayorrad.addActionListener(new MayorqueActionListener());
-    mayorrad.setBounds(195, 54, 127, 25);
-    panel.add(mayorrad);
-    
-    ver_tiempos = new JButton("Ver");
-    ver_tiempos.addActionListener(new VertiemposActionListener());
-    ver_tiempos.setBounds(269, 288, 97, 25);
-    Ventana.add(ver_tiempos);
-    
-    ver_todos = new JButton("Ver");
-    ver_todos.addActionListener(new VertodosActionListener());
-    ver_todos.setBounds(269, 329, 97, 25);
-    Ventana.add(ver_todos);
-    
-    lblMostrarParaTodos = new JLabel("Mostrar tiempos seleccionados");
-    lblMostrarParaTodos.setBounds(68, 289, 189, 22);
-    Ventana.add(lblMostrarParaTodos);
-    
-    lblMostrarTodosLos = new JLabel("Mostrar todos los tiempos");
-    lblMostrarTodosLos.setBounds(67, 330, 175, 22);
-    Ventana.add(lblMostrarTodosLos);
-    
-    cancel = new JButton("Cancelar");
-    cancel.addActionListener(new CancelButton());
-    cancel.setBounds(170, 397, 97, 25);
-    Ventana.add(cancel);
-    Ventana.setVisible(true);
-
-    int canwin = 0;
-    return canwin;
-  }
 
   // Empiezan los listener, por boton, por valor, por accion y por proceso.
   private class VertodosActionListener implements ActionListener {
@@ -1204,52 +1189,6 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
         }
       }
     }
-  }
-  
-  private class TiemposcorteKeyListener implements KeyListener {
-    
-    public void keyPressed(KeyEvent evt) {
-      int key=evt.getKeyCode();
-      String keytex = KeyEvent.getKeyText(key);
-      if (key>=evt.VK_0 && key<=evt.VK_9 || key==evt.VK_ACCEPT || key==evt.VK_TAB || key==evt.VK_BACK_SPACE || key==evt.VK_NUMPAD0 || key==evt.VK_NUMPAD9 || keytex.equals("Minus")) {
-        tiempos_corte_j.setEditable(true);  
-      }
-      else {
-        tiempos_corte_j.setEditable(false); 
-        tiempos_corte_j.setEnabled(true);
-      }
-    }
-    
-    @Override
-    public void keyReleased(KeyEvent arg0) {
-    }
-
-    @Override
-    public void keyTyped(KeyEvent arg0) {
-    }
-  }
-  
-  private class NivelcorteKeyListener implements KeyListener {
-      
-    public void keyPressed(KeyEvent evt) {
-      int key=evt.getKeyCode();
-      if (key>=evt.VK_0 && key<=evt.VK_9 || key==evt.VK_ACCEPT || key==evt.VK_TAB || key==evt.VK_BACK_SPACE || key==evt.VK_NUMPAD0 || key==evt.VK_NUMPAD9) {
-        nivel_corte.setEditable(true);
-      }
-      else {
-        nivel_corte.setEditable(false); 
-        nivel_corte.setEnabled(true);
-      }
-    }
-      
-    @Override
-    public void keyReleased(KeyEvent arg0) {
-    }
-
-    @Override
-    public void keyTyped(KeyEvent arg0) {
-    }
-      
   }
   
   private class VertiemposActionListener implements ActionListener {
@@ -1370,14 +1309,6 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
         choice=">";
       }
     }
-  }  
-  
-  private class CancelButton implements ActionListener {
-
-    public void actionPerformed(ActionEvent e) {
-      Ventana.setVisible(false);
-      return;
-    }
   }
 
   private class WinKeyListener implements KeyListener {
@@ -1439,33 +1370,6 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
       overlay.clear();
       llenar_overlay();
     }
-  }
-  
-  public void imageClosed(ImagePlus e) {  
-  }
-
-  @Override
-  public void imageOpened(ImagePlus e) {
-  }
-
-  @Override
-  public void imageUpdated(ImagePlus e) {
-  }
-
-  @Override
-  public void keyPressed(KeyEvent e) {
-  }
-
-  @Override
-  public void keyReleased(KeyEvent e) {
-  }
-
-  @Override
-  public void keyTyped(KeyEvent e) {
-  }
-
-  @Override
-  public void update(Observable o, Object arg) {
   }
 
   public static void main(String[] args) {
