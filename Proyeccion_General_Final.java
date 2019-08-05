@@ -377,7 +377,10 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter, Ke
       stack_tiempos.addSlice(projection_t.getProcessor());          
     }
     Stack_Tp = new ImagePlus("Max_Stack_all", stack_tiempos);
-     Stack_Tp.show();
+    Stack_Tp.show();
+    // TODO: desplegar tiempos en preview (son 2, no un intervalo), cambiar - por coma
+    // TODO: boton calcular, opcion copiar valores del primer frame
+    // TODO: ver por que no se pueden agregar mas puntos de control
   }
 
   //////////////////// MODIFICAR PREVIE TIEMPOS CON SCROLL , ///////////////////////

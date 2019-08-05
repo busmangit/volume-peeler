@@ -6,9 +6,11 @@ import ij.plugin.filter.PlugInFilterRunner;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.measure.Calibration;
+import ij.measure.ResultsTable;
 import java.util.HashMap;
 import java.awt.Color;
 import java.awt.AWTEvent;
+import java.awt.Label;
 
 public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
 
@@ -16,6 +18,7 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
   private byte[] sourcePixels;
   private Point[] auxPointsArray;
   private int width, height, nSlices, nFrames, threshold, pixelsPerSlice, pixelsPerFrame;
+  private String units;
   private double proportion, calibX, calibY, calibZ;
   private boolean preview = true, okPressed = false;
   private HashMap<Double, ColorProcessor> previewCache;
@@ -38,6 +41,7 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     this.calibX = cal.pixelWidth;
     this.calibY = cal.pixelHeight;
     this.calibZ = cal.pixelDepth;
+    this.units = cal.getUnits();
     this.width = imp.getWidth();
     this.height = imp.getHeight();
     this.nFrames = imp.getNFrames();
@@ -45,7 +49,7 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     this.pixelsPerSlice = this.width * this.height;
     this.pixelsPerFrame = this.pixelsPerSlice * this.nSlices;
     this.previewCache = new HashMap<Double, ColorProcessor>();
-    auxPointsArray = new Point[this.pixelsPerFrame / 15];
+    auxPointsArray = new Point[this.pixelsPerFrame];
     initSourcePixels(imp);
     initThreshold(imp);
     runInitialEstimations(imp);
@@ -68,11 +72,22 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
   }
 
   private void initThreshold(ImagePlus imp) {
-    int thresholdSampleSlice = this.nSlices / 2;
-    imp.setSlice(thresholdSampleSlice);
+    imp.setSlice(getThresholdSampleSlice(imp));
     imp.getProcessor().setAutoThreshold(AutoThresholder.Method.Otsu, true);
     double otsuThreshold = imp.getProcessor().getMinThreshold();
     this.threshold = (int)Math.pow(2, (int)otsuThreshold / 2) / ((int)otsuThreshold / 2 - 1);
+  }
+
+  private int getThresholdSampleSlice(ImagePlus imp) {
+    int maxMeanIntensitySlice = 1;
+    for (int i = 2; i <= this.nSlices; i++) {
+      imp.setSlice(i);
+      if (imp.getRawStatistics().mean > maxMeanIntensitySlice) {
+        maxMeanIntensitySlice = i;
+      }
+    }
+    System.out.println("Sample slice: " + maxMeanIntensitySlice);
+    return maxMeanIntensitySlice;
   }
 
   private void runInitialEstimations(ImagePlus imp) {
@@ -81,7 +96,6 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
   }
 
   private float[] getDistanceMap(int frame, Point center) {
-    System.out.println("frame " + frame + " center.z " + center.z);
     float[] map = new float[this.pixelsPerFrame];
     Point currentPoint = new Point(0, 0, 0);
     for (int i = this.pixelsPerFrame * (frame - 1), j = 0; i < this.pixelsPerFrame * frame; i++, j++) {
@@ -104,6 +118,15 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
   public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
     System.out.println("FLAG para ShowDialog");
     GenericDialog gd = new GenericDialog("Sphere projection");
+    if ((this.calibX == this.calibY) && (this.calibY == this.calibZ)) {
+      gd.addMessage("ATTENTION:");
+    }
+    gd.addMessage("Voxel size is " + 
+      Math.round(100.0 * this.calibX) / 100.0 + " [" + this.units + "] x " +
+      Math.round(100.0 * this.calibY) / 100.0 + " [" + this.units + "] x " +
+      Math.round(100.0 * this.calibZ) / 100.0 + " [" + this.units + "]",
+      null, (this.calibX == this.calibY) && (this.calibY == this.calibZ) ? Color.RED : Color.BLACK
+    );
     gd.addSlider("Radius proportion", 0.0, 1.0, 0.94);
     gd.addPreviewCheckbox(pfr);
     gd.addDialogListener(this);
@@ -205,18 +228,27 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
   
   private void processAllFrames() {
     ImageStack resultsStack = new ImageStack(this.width, this.height);
+    ResultsTable table = new ResultsTable();
     for (int frame = 1; frame <= nFrames; frame++) {
-      System.out.println("Procesando frame " + frame);
+      System.out.println("Processing frame " + frame + "...");
       int vot = voxelsOverThreshold(frame);
-      System.out.println("Voxeles sobre umbral " + vot);
-      Sphere est = sphereEstimation(vot);
-      ImageStack sphereStack = cropSphere(frame, est.r * this.proportion, getDistanceMap(frame, est.center));
-      ColorProcessor ipc = drawEstimations(getZProjectionProcessor(sphereStack));
-      resultsStack.addSlice(ipc);
+      Sphere sphere = sphereEstimation(vot);
+      ImageStack sphereStack = cropSphere(frame, sphere.r * this.proportion, getDistanceMap(frame, sphere.center));
       resultsStack.addSlice(getZProjectionProcessor(sphereStack));
+      addRowToTable(table, frame, sphere);
     }
     ImagePlus impstack = new ImagePlus("Result", resultsStack);
     impstack.show();
+    table.show("Projection data");
+  }
+
+  private void addRowToTable(ResultsTable table, int frame, Sphere sphere) {
+    table.incrementCounter();
+    table.addValue("Frame", frame);
+    table.addValue("Radius", sphere.r);
+    table.addValue("CX", sphere.center.x);
+    table.addValue("CY", sphere.center.y);
+    table.addValue("CZ", sphere.center.z);
   }
 
   private ColorProcessor drawEstimations(ImageProcessor ip) {
@@ -246,11 +278,11 @@ public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
     for (int h = 1; h <= 300; h++) {
       double Lba = 0, Lbb = 0, Lbc = 0, Lb = 0;
       for (int i = 0; i < nPoints; i++) {
-          double dist = realDist(center, auxPointsArray[i]);
-          Lba += (center.x - auxPointsArray[i].x) / dist;
-          Lbb += (center.y - auxPointsArray[i].y) / dist;
-          Lbc += (center.z - auxPointsArray[i].z) / dist;
-          Lb += dist / nPoints;
+        double dist = realDist(center, auxPointsArray[i]);
+        Lba += (center.x - auxPointsArray[i].x) / dist;
+        Lbb += (center.y - auxPointsArray[i].y) / dist;
+        Lbc += (center.z - auxPointsArray[i].z) / dist;
+        Lb += dist / nPoints;
       }
       center.x = centroid.x + Lb * Lba / nPoints;
       center.y = centroid.y + Lb * Lbb / nPoints;
