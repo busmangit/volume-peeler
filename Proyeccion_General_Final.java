@@ -71,7 +71,6 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
   static double wheel = 0;
   static double[][] roll;
   
-  private static Robot robot = null;
   private static Overlay overlay;
 
   private static Roi roi; // puntos X para mostrar el punto de interpolacion  
@@ -152,12 +151,6 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
     zs = stack.getSize()/tiempos;
     width = stack.getWidth();
     height = stack.getHeight();
-      
-    try {
-      robot = new Robot();
-    } catch (AWTException e) {
-      e.printStackTrace();
-    }   
   
     // aca empieza la magia 
     SliderWind(); 
@@ -563,9 +556,6 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
         Stack_Tp.getProcessor().putPixelValue(x,y,(pixel_update_scroll[0]));
       }
     }
-    robot.delay(1);
-    robot.mousePress(MouseEvent.BUTTON1_MASK);
-    robot.mouseRelease(MouseEvent.BUTTON1_MASK);  
   }
   
   /// Misma funcion, considerando que no se seleccionaron tiempos antes.
@@ -834,27 +824,19 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
         // PUNTO 1//
         if (Xcursor>=0 && Xcursor<= Xlvl[0] && Ycursor>=0 && Ycursor<= Ylvl[0] && crtlpress) {
           System.out.println("punto 1");
-          if (zoom < 0) {  
-            int intcadena = (int) (roll[currentslice][0]);
-            cadena = String.valueOf(intcadena);  
+          int intcadena = (int) (roll[currentslice][0]);
+          cadena = String.valueOf(intcadena);  
+          if (zoom < 0) {
             if (intcadena< zs) {
               roll[currentslice][0] +=1;
             }
-            robot.delay(1);
-            robot.mousePress(MouseEvent.BUTTON1_MASK);
-            robot.mouseRelease(MouseEvent.BUTTON1_MASK);
             overlay.clear();
             llenar_overlay();            
           }
           else {
-            int intcadena = (int) (roll[currentslice][0]);
-            cadena = String.valueOf(intcadena);  
             if (intcadena>1) {
               roll[currentslice][0] -=1;
             }
-            robot.delay(1);
-            robot.mousePress(MouseEvent.BUTTON1_MASK);
-            robot.mouseRelease(MouseEvent.BUTTON1_MASK);
             overlay.clear();
             llenar_overlay();
           }
@@ -863,27 +845,19 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
         /////////////////////////////////////////////////
         // PUNTO 2//
         if (Xcursor>=Xlvl[0] && Xcursor<= Xlvl[1] && Ycursor>=0 && Ycursor<= Ylvl[0] && crtlpress) {
+          int intcadena = (int) (roll[currentslice][3]);
+          cadena = String.valueOf(intcadena);  
           if (zoom<0) {  
-            int intcadena = (int) (roll[currentslice][3]);
-            cadena = String.valueOf(intcadena);  
             if (intcadena< zs) {
               roll[currentslice][3] +=1;
             }
-            robot.delay(1);
-            robot.mousePress(MouseEvent.BUTTON1_MASK);
-            robot.mouseRelease(MouseEvent.BUTTON1_MASK);
             overlay.clear();
             llenar_overlay();
           }
           else {
-            int intcadena = (int) (roll[currentslice][3]);
-            cadena = String.valueOf(intcadena);  
             if (intcadena>1) {
               roll[currentslice][3] -=1;
             }
-            robot.delay(1);
-            robot.mousePress(MouseEvent.BUTTON1_MASK);
-            robot.mouseRelease(MouseEvent.BUTTON1_MASK);
             overlay.clear();
             llenar_overlay();  
           }
@@ -892,28 +866,20 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
         /////////////////////////////////////////////////
         // PUNTO 3//
         if (Xcursor>=Xlvl[1] && Xcursor<= width && Ycursor>=0 && Ycursor<= Ylvl[0] && crtlpress) {
+          int intcadena = (int) (roll[currentslice][6]);
+          cadena = String.valueOf(intcadena);  
           if (zoom < 0) {  
-            int intcadena = (int) (roll[currentslice][6]);
-            cadena = String.valueOf(intcadena);  
             if (intcadena < zs) {
               //System.out.println("Int cadena " + intcadena);
               roll[currentslice][6] +=1;
             }
-            robot.delay(1);
-            robot.mousePress(MouseEvent.BUTTON1_MASK);
-            robot.mouseRelease(MouseEvent.BUTTON1_MASK);
             overlay.clear();
             llenar_overlay();  
           }
           else {
-            int intcadena = (int) (roll[currentslice][6]);
-            cadena = String.valueOf(intcadena);  
             if (intcadena > 1) {
               roll[currentslice][6] -=1;
             }
-            robot.delay(1);
-            robot.mousePress(MouseEvent.BUTTON1_MASK);
-            robot.mouseRelease(MouseEvent.BUTTON1_MASK);
             overlay.clear();
             llenar_overlay();
           }
@@ -922,27 +888,19 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
         /////////////////////////////////////////////////
         // PUNTO 4//
         if (Xcursor>=0 && Xcursor<= Xlvl[0] && Ycursor>=Ylvl[0] && Ycursor<= Ylvl[1] && crtlpress) {
+          int intcadena = (int) (roll[currentslice][1]);
+          cadena = String.valueOf(intcadena);  
           if (zoom < 0) {  
-            int intcadena = (int) (roll[currentslice][1]);
-            cadena = String.valueOf(intcadena);  
             if (intcadena< zs) {
               roll[currentslice][1] +=1;
             }
-            robot.delay(1);
-            robot.mousePress(MouseEvent.BUTTON1_MASK);
-            robot.mouseRelease(MouseEvent.BUTTON1_MASK);
             overlay.clear();
             llenar_overlay();
           }
           else {
-            int intcadena = (int) (roll[currentslice][1]);
-            cadena = String.valueOf(intcadena);  
             if (intcadena>1) {
               roll[currentslice][1] -=1;
             }
-            robot.delay(1);
-            robot.mousePress(MouseEvent.BUTTON1_MASK);
-            robot.mouseRelease(MouseEvent.BUTTON1_MASK);
             overlay.clear();
             llenar_overlay();
           }
@@ -951,27 +909,19 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
         /////////////////////////////////////////////////
         // PUNTO 5//
         if (Xcursor>=Xlvl[0] && Xcursor<= Xlvl[1] && Ycursor>=Ylvl[0] && Ycursor<= Ylvl[1] && crtlpress) {
+          int intcadena = (int) (roll[currentslice][4]);
+          cadena = String.valueOf(intcadena);  
           if (zoom<0) {  
-            int intcadena = (int) (roll[currentslice][4]);
-            cadena = String.valueOf(intcadena);  
             if (intcadena< zs) {
               roll[currentslice][4] +=1;
             }
-            robot.delay(1);
-            robot.mousePress(MouseEvent.BUTTON1_MASK);
-            robot.mouseRelease(MouseEvent.BUTTON1_MASK);
             overlay.clear();
             llenar_overlay();
           }
           else {
-            int intcadena = (int) (roll[currentslice][4]);
-            cadena = String.valueOf(intcadena);  
             if (intcadena>1) {
                 roll[currentslice][4] -=1;
             }
-            robot.delay(1);
-            robot.mousePress(MouseEvent.BUTTON1_MASK);
-            robot.mouseRelease(MouseEvent.BUTTON1_MASK);
             overlay.clear();
             llenar_overlay();
           }
@@ -980,27 +930,19 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
         /////////////////////////////////////////////////
         // PUNTO 6//
         if (Xcursor>=Xlvl[1] && Xcursor<= width && Ycursor>=Ylvl[0] && Ycursor<= Ylvl[1] && crtlpress) {
+          int intcadena = (int) (roll[currentslice][7]);
+          cadena = String.valueOf(intcadena);  
           if (zoom<0) {  
-            int intcadena = (int) (roll[currentslice][7]);
-            cadena = String.valueOf(intcadena);  
             if (intcadena< zs) {
               roll[currentslice][7] +=1;
             }
-            robot.delay(1);
-            robot.mousePress(MouseEvent.BUTTON1_MASK);
-            robot.mouseRelease(MouseEvent.BUTTON1_MASK);
             overlay.clear();
             llenar_overlay();
           }
           else {
-            int intcadena = (int) (roll[currentslice][7]);
-            cadena = String.valueOf(intcadena);  
             if (intcadena>1) {
               roll[currentslice][7] -=1;
             }
-            robot.delay(1);
-            robot.mousePress(MouseEvent.BUTTON1_MASK);
-            robot.mouseRelease(MouseEvent.BUTTON1_MASK);
             overlay.clear();
             llenar_overlay();
           }
@@ -1009,27 +951,19 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
         /////////////////////////////////////////////////
         // PUNTO 7//
         if (Xcursor>=0 && Xcursor<= Xlvl[0] && Ycursor>=Ylvl[1] && Ycursor<= height && crtlpress) {
+          int intcadena = (int) (roll[currentslice][2]);
+          cadena = String.valueOf(intcadena);  
           if (zoom<0) {  
-            int intcadena = (int) (roll[currentslice][2]);
-            cadena = String.valueOf(intcadena);  
             if (intcadena< zs) {
               roll[currentslice][2] +=1;
             }
-            robot.delay(1);
-            robot.mousePress(MouseEvent.BUTTON1_MASK);
-            robot.mouseRelease(MouseEvent.BUTTON1_MASK);
             overlay.clear();
             llenar_overlay();
           }
           else {
-            int intcadena = (int) (roll[currentslice][2]);
-            cadena = String.valueOf(intcadena);  
             if (intcadena>1) {
               roll[currentslice][2] -=1;
             }
-            robot.delay(1);
-            robot.mousePress(MouseEvent.BUTTON1_MASK);
-            robot.mouseRelease(MouseEvent.BUTTON1_MASK);
             overlay.clear();
             llenar_overlay();
           }
@@ -1038,27 +972,19 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
         /////////////////////////////////////////////////
         // PUNTO 8//
         if (Xcursor>=Xlvl[0] && Xcursor<= Xlvl[1] && Ycursor>=Ylvl[1] && Ycursor<= height && crtlpress) {
+          int intcadena = (int) (roll[currentslice][5]);
+          cadena = String.valueOf(intcadena);  
           if (zoom<0) {  
-            int intcadena = (int) (roll[currentslice][5]);
-            cadena = String.valueOf(intcadena);  
             if (intcadena< zs) {
               roll[currentslice][5] +=1;
             }
-            robot.delay(1);
-            robot.mousePress(MouseEvent.BUTTON1_MASK);
-            robot.mouseRelease(MouseEvent.BUTTON1_MASK);
             overlay.clear();
             llenar_overlay();
           }
           else {
-            int intcadena = (int) (roll[currentslice][5]);
-            cadena = String.valueOf(intcadena);  
             if (intcadena>1) {
               roll[currentslice][5] -=1;
             }
-            robot.delay(1);
-            robot.mousePress(MouseEvent.BUTTON1_MASK);
-            robot.mouseRelease(MouseEvent.BUTTON1_MASK);
             overlay.clear();
             llenar_overlay();
           }
@@ -1067,27 +993,19 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
         /////////////////////////////////////////////////
         // PUNTO 9//
         if (Xcursor>=Xlvl[1] && Xcursor<= width && Ycursor>=Ylvl[1] && Ycursor<= height && crtlpress) {
+          int intcadena = (int) (roll[currentslice][8]);
+          cadena = String.valueOf(intcadena);  
           if (zoom<0) {  
-            int intcadena = (int) (roll[currentslice][8]);
-            cadena = String.valueOf(intcadena);  
             if (intcadena< zs) {
               roll[currentslice][8] +=1;
             }
-            robot.delay(1);
-            robot.mousePress(MouseEvent.BUTTON1_MASK);
-            robot.mouseRelease(MouseEvent.BUTTON1_MASK);
             overlay.clear();
             llenar_overlay();
           }
           else {
-            int intcadena = (int) (roll[currentslice][8]);
-            cadena = String.valueOf(intcadena);  
             if (intcadena>1) {
               roll[currentslice][8] -=1;
             }
-            robot.delay(1);
-            robot.mousePress(MouseEvent.BUTTON1_MASK);
-            robot.mouseRelease(MouseEvent.BUTTON1_MASK);
             overlay.clear();
             llenar_overlay();
           }
