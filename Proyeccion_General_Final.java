@@ -812,203 +812,78 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
       addMouseWheelListener(this);
     }
 
+    private void cambiarRoll(int zoom, int cuadrante) {
+      int intcadena = (int) (roll[currentslice][cuadrante]);
+      String cadena = String.valueOf(intcadena);  
+      if (zoom < 0 && intcadena < zs) {
+        roll[currentslice][cuadrante] +=1;
+      }
+      else if (intcadena > 1) {
+        roll[currentslice][cuadrante] -=1;
+      }
+      overlay.clear();
+      llenar_overlay();     
+    }
+
     public synchronized void mouseWheelMoved(MouseWheelEvent event) {
       if (getCanvas().cursorOverImage()) {
-        int zoom = event.getWheelRotation();
-        String cadena = "";
         Point point = getCanvas().getMousePosition();
+        int zoom = event.getWheelRotation();
         double magnificacion = (double) getCanvas().getMagnification();
         int Xcursor = (int) (((point.getX() * 1)) / magnificacion);
         int Ycursor = (int) (((point.getY() * 1)) / magnificacion);
         //////////////////////////////////////////////////////////////////////////////
         // PUNTO 1//
         if (Xcursor>=0 && Xcursor<= Xlvl[0] && Ycursor>=0 && Ycursor<= Ylvl[0] && crtlpress) {
-          System.out.println("punto 1");
-          int intcadena = (int) (roll[currentslice][0]);
-          cadena = String.valueOf(intcadena);  
-          if (zoom < 0) {
-            if (intcadena< zs) {
-              roll[currentslice][0] +=1;
-            }
-            overlay.clear();
-            llenar_overlay();            
-          }
-          else {
-            if (intcadena>1) {
-              roll[currentslice][0] -=1;
-            }
-            overlay.clear();
-            llenar_overlay();
-          }
+          cambiarRoll(zoom, 0);
         }     
         
         /////////////////////////////////////////////////
         // PUNTO 2//
         if (Xcursor>=Xlvl[0] && Xcursor<= Xlvl[1] && Ycursor>=0 && Ycursor<= Ylvl[0] && crtlpress) {
-          int intcadena = (int) (roll[currentslice][3]);
-          cadena = String.valueOf(intcadena);  
-          if (zoom<0) {  
-            if (intcadena< zs) {
-              roll[currentslice][3] +=1;
-            }
-            overlay.clear();
-            llenar_overlay();
-          }
-          else {
-            if (intcadena>1) {
-              roll[currentslice][3] -=1;
-            }
-            overlay.clear();
-            llenar_overlay();  
-          }
+          cambiarRoll(zoom, 3);
         }
     
         /////////////////////////////////////////////////
         // PUNTO 3//
         if (Xcursor>=Xlvl[1] && Xcursor<= width && Ycursor>=0 && Ycursor<= Ylvl[0] && crtlpress) {
-          int intcadena = (int) (roll[currentslice][6]);
-          cadena = String.valueOf(intcadena);  
-          if (zoom < 0) {  
-            if (intcadena < zs) {
-              //System.out.println("Int cadena " + intcadena);
-              roll[currentslice][6] +=1;
-            }
-            overlay.clear();
-            llenar_overlay();  
-          }
-          else {
-            if (intcadena > 1) {
-              roll[currentslice][6] -=1;
-            }
-            overlay.clear();
-            llenar_overlay();
-          }
+          cambiarRoll(zoom, 6);
         }
         
         /////////////////////////////////////////////////
         // PUNTO 4//
         if (Xcursor>=0 && Xcursor<= Xlvl[0] && Ycursor>=Ylvl[0] && Ycursor<= Ylvl[1] && crtlpress) {
-          int intcadena = (int) (roll[currentslice][1]);
-          cadena = String.valueOf(intcadena);  
-          if (zoom < 0) {  
-            if (intcadena< zs) {
-              roll[currentslice][1] +=1;
-            }
-            overlay.clear();
-            llenar_overlay();
-          }
-          else {
-            if (intcadena>1) {
-              roll[currentslice][1] -=1;
-            }
-            overlay.clear();
-            llenar_overlay();
-          }
+          cambiarRoll(zoom, 1);
         }
                             
         /////////////////////////////////////////////////
         // PUNTO 5//
         if (Xcursor>=Xlvl[0] && Xcursor<= Xlvl[1] && Ycursor>=Ylvl[0] && Ycursor<= Ylvl[1] && crtlpress) {
-          int intcadena = (int) (roll[currentslice][4]);
-          cadena = String.valueOf(intcadena);  
-          if (zoom<0) {  
-            if (intcadena< zs) {
-              roll[currentslice][4] +=1;
-            }
-            overlay.clear();
-            llenar_overlay();
-          }
-          else {
-            if (intcadena>1) {
-                roll[currentslice][4] -=1;
-            }
-            overlay.clear();
-            llenar_overlay();
-          }
+          cambiarRoll(zoom, 4);
         }
         
         /////////////////////////////////////////////////
         // PUNTO 6//
         if (Xcursor>=Xlvl[1] && Xcursor<= width && Ycursor>=Ylvl[0] && Ycursor<= Ylvl[1] && crtlpress) {
-          int intcadena = (int) (roll[currentslice][7]);
-          cadena = String.valueOf(intcadena);  
-          if (zoom<0) {  
-            if (intcadena< zs) {
-              roll[currentslice][7] +=1;
-            }
-            overlay.clear();
-            llenar_overlay();
-          }
-          else {
-            if (intcadena>1) {
-              roll[currentslice][7] -=1;
-            }
-            overlay.clear();
-            llenar_overlay();
-          }
+          cambiarRoll(zoom, 7);
         }
           
         /////////////////////////////////////////////////
         // PUNTO 7//
         if (Xcursor>=0 && Xcursor<= Xlvl[0] && Ycursor>=Ylvl[1] && Ycursor<= height && crtlpress) {
-          int intcadena = (int) (roll[currentslice][2]);
-          cadena = String.valueOf(intcadena);  
-          if (zoom<0) {  
-            if (intcadena< zs) {
-              roll[currentslice][2] +=1;
-            }
-            overlay.clear();
-            llenar_overlay();
-          }
-          else {
-            if (intcadena>1) {
-              roll[currentslice][2] -=1;
-            }
-            overlay.clear();
-            llenar_overlay();
-          }
+          cambiarRoll(zoom, 2);
         }
                             
         /////////////////////////////////////////////////
         // PUNTO 8//
         if (Xcursor>=Xlvl[0] && Xcursor<= Xlvl[1] && Ycursor>=Ylvl[1] && Ycursor<= height && crtlpress) {
-          int intcadena = (int) (roll[currentslice][5]);
-          cadena = String.valueOf(intcadena);  
-          if (zoom<0) {  
-            if (intcadena< zs) {
-              roll[currentslice][5] +=1;
-            }
-            overlay.clear();
-            llenar_overlay();
-          }
-          else {
-            if (intcadena>1) {
-              roll[currentslice][5] -=1;
-            }
-            overlay.clear();
-            llenar_overlay();
-          }
+          cambiarRoll(zoom, 5);
         }
 
         /////////////////////////////////////////////////
         // PUNTO 9//
         if (Xcursor>=Xlvl[1] && Xcursor<= width && Ycursor>=Ylvl[1] && Ycursor<= height && crtlpress) {
-          int intcadena = (int) (roll[currentslice][8]);
-          cadena = String.valueOf(intcadena);  
-          if (zoom<0) {  
-            if (intcadena< zs) {
-              roll[currentslice][8] +=1;
-            }
-            overlay.clear();
-            llenar_overlay();
-          }
-          else {
-            if (intcadena>1) {
-              roll[currentslice][8] -=1;
-            }
-            overlay.clear();
-            llenar_overlay();
-          }
+          cambiarRoll(zoom, 8);
         }
       }
     }
