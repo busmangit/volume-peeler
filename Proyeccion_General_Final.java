@@ -69,7 +69,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
   private boolean screenmod = false;
   
   static double wheel = 0;
-  static double[][] roll;
+  static double[][] corte;
   
   private static Overlay overlay;
 
@@ -275,7 +275,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
   }
 
   private static void dibujarNumero(int nROI, double x, double y) {
-    stack_roi[currentslice][nROI] = new TextRoi(x, y, 0, 0, "z=" + String.valueOf(Math.round(roll[currentslice][nROI])), font);
+    stack_roi[currentslice][nROI] = new TextRoi(x, y, 0, 0, "z=" + String.valueOf(Math.round(corte[currentslice][nROI])), font);
     stack_roi[currentslice][nROI].setStrokeColor(Color.YELLOW);
     overlay.add(stack_roi[currentslice][nROI]);
   }
@@ -307,8 +307,6 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
     float[] vectorx0y89 = new float[width];
     
     zlabel = new ByteProcessor(width, height);
-    zlabel.setValue(255); // white = 255 
-    zlabel.fill();  
     zlabel.setInterpolationMethod(ImageProcessor.BILINEAR); 
     
     float[] vectoryvalue = new float[Inter2[1]]; 
@@ -321,20 +319,20 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
     for (int h = 0; h < (height-Inter2[1]) ; h++) {
       vectory2value[h] = h; 
     }
-    for (int h = 0; h < width ; h++) {
-      float spline = (float) sf1.evalSpline(vec1,vec2,vec1.length,h); //y=0
-      float spline2 = (float) sf2.evalSpline(vec3,vec4,vec3.length,h);//y=3
-      float spline3 = (float) sf3.evalSpline(vec5,vec6,vec5.length,h);//y=3
+    for (int x = 0; x < width ; x++) {
+      float spline = (float) sf1.evalSpline(vec1,vec2,3, x); //y=0
+      float spline2 = (float) sf2.evalSpline(vec3,vec4,3 ,x);//y=3
+      float spline3 = (float) sf3.evalSpline(vec5,vec6,3, x);//y=3
            
-      vectorx0y0 [h] =  spline;
-      vectorx0y46 [h] = spline2;
-      vectorx0y89 [h] = spline3;
+      vectorx0y0 [x] =  spline;
+      vectorx0y46 [x] = spline2;
+      vectorx0y89 [x] = spline3;
          
       //Con los parametros de corte de Y =0 e Y=3, 
       //se pueden obtener las rectas de x1 hasta xn
-      zlabel.putPixelValue(h,Inter2[0],vectorx0y0[h]);
-      zlabel.putPixelValue(h,Inter2[1],vectorx0y46[h]);
-      zlabel.putPixelValue(h,Inter2[2],vectorx0y89[h]);     
+      zlabel.putPixelValue(x, Inter2[0], vectorx0y0[x]);
+      zlabel.putPixelValue(x, Inter2[1], vectorx0y46[x]);
+      zlabel.putPixelValue(x, Inter2[2], vectorx0y89[x]);     
     }
     float [] vectorauxl1 = {Inter2[0],Inter2[1]};
     float [] vectorauxl2 = {Inter2[1],Inter2[2]};
@@ -430,15 +428,15 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
     
     //para Y = 60
     vec1 = new float [] {Inter1[0],Inter1[1],Inter1[2]}; //x
-    vec2 = new float [] {(float) roll[currentslice][0],(float) roll[currentslice][3],(float) roll[currentslice][6]}; //z 
+    vec2 = new float [] {(float) corte[currentslice][0],(float) corte[currentslice][3],(float) corte[currentslice][6]}; //z 
         
     //para Y = 456
     vec3 = new float [] {Inter1[0],Inter1[1],Inter1[2]}; //x
-    vec4 = new float [] {(float) roll[currentslice][1],(float) roll[currentslice][4],(float) roll[currentslice][7]}; //z
+    vec4 = new float [] {(float) corte[currentslice][1],(float) corte[currentslice][4],(float) corte[currentslice][7]}; //z
     
     // para Y = 892
     vec5 = new float [] {Inter1[0],Inter1[1],Inter1[2]}; //x
-    vec6 = new float [] {(float) roll[currentslice][2],(float) roll[currentslice][5],(float) roll[currentslice][8]}; //z
+    vec6 = new float [] {(float) corte[currentslice][2],(float) corte[currentslice][5],(float) corte[currentslice][8]}; //z
     
     //PRIMERA PLANA float
     sf1 = new SplineFitter(vec1, vec2, 3);
@@ -608,15 +606,15 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
       
       //para Y = 60
       vec1 = new float [] {Inter1[0],Inter1[1],Inter1[2]}; //x
-      vec2 = new float [] {(float) roll[x][0],(float) roll[x][3],(float) roll[x][6]}; //z 
+      vec2 = new float [] {(float) corte[x][0],(float) corte[x][3],(float) corte[x][6]}; //z 
       
       //para Y = 456
       vec3 = new float [] {Inter1[0],Inter1[1],Inter1[2]}; //x
-      vec4 = new float [] {(float) roll[x][1],(float) roll[x][4],(float) roll[x][7]}; //z
+      vec4 = new float [] {(float) corte[x][1],(float) corte[x][4],(float) corte[x][7]}; //z
       
       // para Y = 892
       vec5 = new float [] {Inter1[0],Inter1[1],Inter1[2]}; //x
-      vec6 = new float [] {(float) roll[x][2],(float) roll[x][5],(float) roll[x][8]}; //z
+      vec6 = new float [] {(float) corte[x][2],(float) corte[x][5],(float) corte[x][8]}; //z
       
       //PRIMERA PLANA float
       sf1 = new SplineFitter(vec1, vec2, 3);
@@ -812,17 +810,17 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
       addMouseWheelListener(this);
     }
 
-    private void cambiarRoll(int zoom, int cuadrante) {
-      int intcadena = (int) (roll[currentslice][cuadrante]);
+    private void cambiarCorteCuadrante(int zoom, int cuadrante) {
+      int intcadena = (int) (corte[currentslice][cuadrante]);
       String cadena = String.valueOf(intcadena);  
       if (zoom < 0 && intcadena < zs) {
-        roll[currentslice][cuadrante] +=1;
+        corte[currentslice][cuadrante] += 1;
       }
       else if (intcadena > 1) {
-        roll[currentslice][cuadrante] -=1;
+        corte[currentslice][cuadrante] -= 1;
       }
       overlay.clear();
-      llenar_overlay();     
+      llenar_overlay();
     }
 
     public synchronized void mouseWheelMoved(MouseWheelEvent event) {
@@ -832,58 +830,32 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
         double magnificacion = (double) getCanvas().getMagnification();
         int Xcursor = (int) (((point.getX() * 1)) / magnificacion);
         int Ycursor = (int) (((point.getY() * 1)) / magnificacion);
-        //////////////////////////////////////////////////////////////////////////////
-        // PUNTO 1//
         if (Xcursor>=0 && Xcursor<= Xlvl[0] && Ycursor>=0 && Ycursor<= Ylvl[0] && crtlpress) {
-          cambiarRoll(zoom, 0);
-        }     
-        
-        /////////////////////////////////////////////////
-        // PUNTO 2//
+          cambiarCorteCuadrante(zoom, 0);
+        }
         if (Xcursor>=Xlvl[0] && Xcursor<= Xlvl[1] && Ycursor>=0 && Ycursor<= Ylvl[0] && crtlpress) {
-          cambiarRoll(zoom, 3);
+          cambiarCorteCuadrante(zoom, 3);
         }
-    
-        /////////////////////////////////////////////////
-        // PUNTO 3//
         if (Xcursor>=Xlvl[1] && Xcursor<= width && Ycursor>=0 && Ycursor<= Ylvl[0] && crtlpress) {
-          cambiarRoll(zoom, 6);
+          cambiarCorteCuadrante(zoom, 6);
         }
-        
-        /////////////////////////////////////////////////
-        // PUNTO 4//
         if (Xcursor>=0 && Xcursor<= Xlvl[0] && Ycursor>=Ylvl[0] && Ycursor<= Ylvl[1] && crtlpress) {
-          cambiarRoll(zoom, 1);
+          cambiarCorteCuadrante(zoom, 1);
         }
-                            
-        /////////////////////////////////////////////////
-        // PUNTO 5//
         if (Xcursor>=Xlvl[0] && Xcursor<= Xlvl[1] && Ycursor>=Ylvl[0] && Ycursor<= Ylvl[1] && crtlpress) {
-          cambiarRoll(zoom, 4);
+          cambiarCorteCuadrante(zoom, 4);
         }
-        
-        /////////////////////////////////////////////////
-        // PUNTO 6//
         if (Xcursor>=Xlvl[1] && Xcursor<= width && Ycursor>=Ylvl[0] && Ycursor<= Ylvl[1] && crtlpress) {
-          cambiarRoll(zoom, 7);
+          cambiarCorteCuadrante(zoom, 7);
         }
-          
-        /////////////////////////////////////////////////
-        // PUNTO 7//
         if (Xcursor>=0 && Xcursor<= Xlvl[0] && Ycursor>=Ylvl[1] && Ycursor<= height && crtlpress) {
-          cambiarRoll(zoom, 2);
+          cambiarCorteCuadrante(zoom, 2);
         }
-                            
-        /////////////////////////////////////////////////
-        // PUNTO 8//
         if (Xcursor>=Xlvl[0] && Xcursor<= Xlvl[1] && Ycursor>=Ylvl[1] && Ycursor<= height && crtlpress) {
-          cambiarRoll(zoom, 5);
+          cambiarCorteCuadrante(zoom, 5);
         }
-
-        /////////////////////////////////////////////////
-        // PUNTO 9//
         if (Xcursor>=Xlvl[1] && Xcursor<= width && Ycursor>=Ylvl[1] && Ycursor<= height && crtlpress) {
-          cambiarRoll(zoom, 8);
+          cambiarCorteCuadrante(zoom, 8);
         }
       }
     }
@@ -917,10 +889,10 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
         
         //System.out.println("En realidad los numeros son "+ parser_count  );
         enable_scroll_change = true;
-        roll =  new double[parser_count][9];
+        corte = new double[parser_count][9];
         for (int tps = 0; tps < parser_count; tps++) {
           for (int points = 0; points < 9; points++) {
-            roll[tps][points] = lvl_corte;              
+            corte[tps][points] = lvl_corte;              
           }
         }
           
@@ -1000,10 +972,10 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
         }
       }
       enable_scroll_change = true;
-      roll =  new double[parser_count][9];
+      corte = new double[parser_count][9];
       for (int tps = 0; tps < parser_count; tps++) {
         for (int points = 0; points < 9; points++) {
-          roll[tps][points] = lvl_corte;            
+          corte[tps][points] = lvl_corte;            
         }
       }
       anterior = new int [parser_count][9];
@@ -1118,7 +1090,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
       if (keytex.equals("Ctrl")) {
         crtlpress =  false;
         for (int x = 0; x < 9; x++) {
-          siguiente[currentslice][x] = (int) roll[currentslice][x];
+          siguiente[currentslice][x] = (int) corte[currentslice][x];
         }
         if(anterior[currentslice][0] != siguiente[currentslice][0] || anterior[currentslice][1] != siguiente[currentslice][1] || anterior[currentslice][2] != siguiente[currentslice][2] 
             || anterior[currentslice][3] != siguiente[currentslice][3] || anterior[currentslice][4] != siguiente[currentslice][4] || 
