@@ -39,16 +39,19 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JLayeredPane;;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
+import javax.swing.OverlayLayout;;
 import javax.swing.border.EmptyBorder;
 
 public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
@@ -216,10 +219,11 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
     ver_tiempos.setBounds(269, 288, 97, 25);
     Ventana.add(ver_tiempos);
     
-    ver_todos = new JButton("Begin");
+    ver_todos = new JButton("Project all frames");
     ver_todos.addActionListener(new VertodosActionListener());
     ver_todos.setBounds(103, 349, 194, 25);
     Ventana.add(ver_todos);
+    ver_tiempos.requestFocus();
 
     Ventana.setVisible(true);
   }
@@ -791,13 +795,97 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
     
   }
 
-  class MyWindow extends JFrame {
+  class MyWindow extends JFrame implements MouseMotionListener {
 
-    public MyWindow(ImagePlus image) {
-      this.setTitle("xx");
-      this.add(new ImageCanvas(image));
-      this.pack();
+    private UICuadrante uiCuadrante;
+    private ContenedorImagen contenedorImagen;
+    private final int anchoUICuadrante = 50;
+    private final int altoUICuadrante = 100;
+
+    public MyWindow(ImagePlus image)  {
+      this.setTitle("Prueba OverlayLayout");
+
+      uiCuadrante = new UICuadrante();
+      uiCuadrante.setBounds(width / 3, 0, anchoUICuadrante, altoUICuadrante);
+
+      contenedorImagen = new ContenedorImagen(image, this);
+      contenedorImagen.setBounds(0, 0, width, height);
+
+      JLayeredPane layered = new JLayeredPane();
+      layered.setPreferredSize(new Dimension(width, height));
+      layered.add(contenedorImagen, new Integer(1));
+      layered.add(uiCuadrante, new Integer(2));
+
+      this.add(layered);
+      this.setSize(width, height + 50);
       this.setVisible(true);
+      System.err.println(new java.util.Date());
+    }
+
+    public void mouseMoved(MouseEvent e) {
+      uiCuadrante.setBounds(
+        (int)(3 * e.getX() / width) * width / 3,
+        (int)(3 * e.getY() / height) * height / 3,
+        anchoUICuadrante,
+        altoUICuadrante
+      );
+    }
+
+    public void mouseDragged(MouseEvent e) {
+      System.out.println("d");
+    }
+
+    private class ContenedorImagen extends JPanel {
+      
+      public ContenedorImagen(ImagePlus image, MouseMotionListener listener) {
+        ImageCanvas ic = new ImageCanvas(image);
+        ic.addMouseMotionListener(listener);
+        add(ic);
+        setMaximumSize(new Dimension(width, height));
+        setPreferredSize(new Dimension(width, height));
+      }
+    }
+
+    private class UICuadrante extends JPanel {
+
+      public UICuadrante() {
+        setBackground(Color.RED);
+        setMaximumSize(new Dimension(anchoUICuadrante, altoUICuadrante));
+        setPreferredSize(new Dimension(anchoUICuadrante, altoUICuadrante));
+        initMouseListener();
+      }
+
+      private void initMouseListener() {
+        addMouseListener(new MouseListener() {
+
+          @Override
+          public void mouseClicked(MouseEvent e) {
+              System.out.println("Mouse was clicked");
+          }
+  
+          @Override
+          public void mouseEntered(MouseEvent arg0) {
+            System.out.println("Mouse entered");
+          }
+  
+          @Override
+          public void mouseExited(MouseEvent arg0) {
+          }
+  
+          @Override
+          public void mousePressed(MouseEvent arg0) {
+          }
+  
+          @Override
+          public void mouseReleased(MouseEvent arg0) {
+          }
+        });
+      }
+
+      public void paintComponent(Graphics g) {
+        g.setColor(Color.red);
+        g.fillOval(75, 75, 150, 75);
+      }
     }
 
   }
@@ -1018,7 +1106,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
       projector.setStopSlice(1*zs);
       projector.doProjection();
       ImagePlus projections = projector.getProjection();
-      new MyWindow(projections);
+      new MyWindow(Stack_Tp);
       Stack_Tp.setWindow(new Window(Stack_Tp, Stack_Tp.getCanvas())); 
       overlay = new Overlay();
       font = new Font("", Font.PLAIN, 24);
