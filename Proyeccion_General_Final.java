@@ -807,8 +807,11 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
     private int frameActual = 0;
     private int cuadranteActual = 0;
     private final int nCuadrantes = 9;
+    private ImagePlus imagen;
+    private JLayeredPane layered;
 
     public MyWindow(ImagePlus image)  {
+      this.imagen = image;
       this.setTitle("Prueba OverlayLayout");
       this.zEnCuadrante = new int[numeroDeFramesSeleccionados][nCuadrantes];
 
@@ -818,7 +821,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
       contenedorImagen = new ContenedorImagen(image, this);
       contenedorImagen.setBounds(0, 0, width, height);
 
-      JLayeredPane layered = new JLayeredPane();
+      layered = new JLayeredPane();
       layered.setPreferredSize(new Dimension(width, height));
       layered.add(contenedorImagen, new Integer(1));
       layered.add(uiCuadrante, new Integer(2));
@@ -828,6 +831,11 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
       this.add(layered, BorderLayout.CENTER);
       this.pack();
       this.setVisible(true);
+    }
+
+    private void actualizarProyeccion() {
+      layered.remove(contenedorImagen);
+      layered.add(contenedorImagen, new Integer(1));
     }
 
     public void mouseMoved(MouseEvent e) {
@@ -872,6 +880,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
         ic.addMouseMotionListener(listener);
         add(ic);
       }
+      
     }
 
     private class UICuadrante extends JPanel implements ActionListener {
@@ -908,6 +917,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
               zEnCuadrante[frameActual][cuadranteActual] + 1,
               zs
             );
+            actualizarProyeccion();
             break;
           }
           case "-": {
@@ -915,6 +925,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
               zEnCuadrante[frameActual][cuadranteActual] - 1,
               0
             );
+            actualizarProyeccion();
             break;
           }
         }
