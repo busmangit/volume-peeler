@@ -42,6 +42,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
@@ -799,11 +800,17 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
 
     private UICuadrante uiCuadrante;
     private ContenedorImagen contenedorImagen;
-    private final int anchoUICuadrante = 50;
-    private final int altoUICuadrante = 100;
+    private final int anchoUICuadrante = 20;
+    private final int altoUICuadrante = 60;
+    private int[][] zEnCuadrante;
+    private int numeroDeFramesSeleccionados = 1;
+    private int frameActual = 0;
+    private int cuadranteActual = 0;
+    private final int nCuadrantes = 9;
 
     public MyWindow(ImagePlus image)  {
       this.setTitle("Prueba OverlayLayout");
+      this.zEnCuadrante = new int[numeroDeFramesSeleccionados][nCuadrantes];
 
       uiCuadrante = new UICuadrante();
       uiCuadrante.setBounds(width / 3, 0, anchoUICuadrante, altoUICuadrante);
@@ -816,75 +823,101 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
       layered.add(contenedorImagen, new Integer(1));
       layered.add(uiCuadrante, new Integer(2));
 
-      this.add(layered);
-      this.setSize(width, height + 50);
+      this.setLayout(new BorderLayout());
+      this.add(new JLabel("test"), BorderLayout.NORTH);
+      this.add(layered, BorderLayout.CENTER);
+      this.pack();
       this.setVisible(true);
-      System.err.println(new java.util.Date());
     }
 
     public void mouseMoved(MouseEvent e) {
+      int
+        xCuadrante = (int)(3 * e.getX() / width),
+        yCuadrante = (int)(3 * e.getY() / height),
+        xUICuadrante = xCuadrante * width / 3,
+        yUICuadrante = yCuadrante * height / 3;
+      cuadranteActual = xCuadrante + yCuadrante * 3;
       uiCuadrante.setBounds(
-        (int)(3 * e.getX() / width) * width / 3,
-        (int)(3 * e.getY() / height) * height / 3,
+        xUICuadrante,
+        yUICuadrante,
         anchoUICuadrante,
         altoUICuadrante
       );
+      System.out.println("El mouse esta sobre el cuadrante " + cuadranteActual);
+      imprimirZs();
+    }
+
+    private void imprimirZs() {
+      for (int i = 0; i < zEnCuadrante.length; i++) {
+        for (int j = 0; j < zEnCuadrante[0].length; j++) {
+          if ((j + 1) % 3 == 0) {
+            System.out.println(zEnCuadrante[i][j]);
+          }
+          else {
+            System.out.print(zEnCuadrante[i][j] + ",");
+          }
+        }
+      }
     }
 
     public void mouseDragged(MouseEvent e) {
-      System.out.println("d");
     }
 
     private class ContenedorImagen extends JPanel {
       
       public ContenedorImagen(ImagePlus image, MouseMotionListener listener) {
+        setMaximumSize(new Dimension(width, height));
+        setPreferredSize(new Dimension(width, height));
         ImageCanvas ic = new ImageCanvas(image);
         ic.addMouseMotionListener(listener);
         add(ic);
-        setMaximumSize(new Dimension(width, height));
-        setPreferredSize(new Dimension(width, height));
       }
     }
 
-    private class UICuadrante extends JPanel {
+    private class UICuadrante extends JPanel implements ActionListener {
+
+      private JButton botonAumentarZ, botonReducirZ;
 
       public UICuadrante() {
         setBackground(Color.RED);
         setMaximumSize(new Dimension(anchoUICuadrante, altoUICuadrante));
         setPreferredSize(new Dimension(anchoUICuadrante, altoUICuadrante));
-        initMouseListener();
-      }
-
-      private void initMouseListener() {
-        addMouseListener(new MouseListener() {
-
-          @Override
-          public void mouseClicked(MouseEvent e) {
-              System.out.println("Mouse was clicked");
-          }
-  
-          @Override
-          public void mouseEntered(MouseEvent arg0) {
-            System.out.println("Mouse entered");
-          }
-  
-          @Override
-          public void mouseExited(MouseEvent arg0) {
-          }
-  
-          @Override
-          public void mousePressed(MouseEvent arg0) {
-          }
-  
-          @Override
-          public void mouseReleased(MouseEvent arg0) {
-          }
-        });
+        botonAumentarZ = new JButton("+");
+        botonAumentarZ.setPreferredSize(new Dimension(20, 15));
+        botonAumentarZ.addActionListener(this);
+        botonReducirZ = new JButton("-");
+        botonReducirZ.setPreferredSize(new Dimension(20, 15));
+        botonReducirZ.addActionListener(this);
+        JLabel slider = new JLabel();
+        slider.setPreferredSize(new Dimension(20, 20));
+        add(botonAumentarZ);
+        add(slider);
+        add(botonReducirZ);
       }
 
       public void paintComponent(Graphics g) {
         g.setColor(Color.red);
         g.fillOval(75, 75, 150, 75);
+      }
+
+      public void actionPerformed(ActionEvent e) {
+        JButton origen = (JButton)(e.getSource());
+        switch (origen.getText()) {
+          case "+": {
+            zEnCuadrante[frameActual][cuadranteActual] = Math.min(
+              zEnCuadrante[frameActual][cuadranteActual] + 1,
+              zs
+            );
+            break;
+          }
+          case "-": {
+            zEnCuadrante[frameActual][cuadranteActual] = Math.max(
+              zEnCuadrante[frameActual][cuadranteActual] - 1,
+              0
+            );
+            break;
+          }
+        }
       }
     }
 
