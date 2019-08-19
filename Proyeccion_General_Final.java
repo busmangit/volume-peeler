@@ -629,7 +629,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
       float [] vectorx0y0 = new float[width]; 
       float [] vectorx0y46 = new float[width]; 
       float [] vectorx0y89 = new float[width];
-       
+      
       ImageProcessor zlabel_times = new ByteProcessor(width, height);  
       zlabel_times.setValue(255); // white = 255 
       zlabel_times.fill(); 
@@ -653,11 +653,11 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
          vectorx0y46 [h] = spline2;
          vectorx0y89 [h] = spline3;
          
-         //Con los parametros de corte de Y =0 e Y=3, 
+         //Con los parametros de corte de Y =0 e Y=3,
          //se pueden obtener las rectas de x1 hasta xn
          zlabel_times.putPixelValue(h,Inter2[0],vectorx0y0[h]);
          zlabel_times.putPixelValue(h,Inter2[1],vectorx0y46[h]);
-         zlabel_times.putPixelValue(h,Inter2[2],vectorx0y89[h]);  
+         zlabel_times.putPixelValue(h,Inter2[2],vectorx0y89[h]);
       }
       
       float [] vectorauxl1 = {Inter2[0],Inter2[1]};
@@ -810,6 +810,10 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
     private ImagePlus imagen;
     private JLayeredPane layered;
 
+    private ImageStack stackProfundidades;
+    private ImagePlus imagenProfundidades;
+    private ImagePlus imagenProfundidadesResized;
+
     public MyWindow(ImagePlus image)  {
       this.imagen = image;
       this.setTitle("Prueba OverlayLayout");
@@ -831,41 +835,69 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
       this.add(layered, BorderLayout.CENTER);
       this.pack();
       this.setVisible(true);
+
+      imagenProfundidades = IJ.createImage("x", 3, 3, 1, 16);
+      stackProfundidades = imagenProfundidades.getStack();
+      imagenProfundidadesResized = IJ.createImage("x", width, height, 1, 16);
+      imagenProfundidadesResized.show();
     }
 
     private void actualizarProyeccion() {
-      layered.remove(contenedorImagen);
-      layered.add(contenedorImagen, new Integer(1));
+      for (int j = 0; j < zEnCuadrante[frameActual].length; j++) {
+        stackProfundidades.setVoxel(j % 3, j / 3, 0, 65000 * zEnCuadrante[frameActual][j] / zs);
+      }
+      ImageProcessor proc = imagenProfundidades.getProcessor();
+      proc.setInterpolationMethod(ImageProcessor.BICUBIC);
+      ImageProcessor resizedProc = proc.resize(width, height);
+      resizedProc.setRoi(width / 12, height / 12, 2 * width / 3, 2 * height / 3);
+      ImageProcessor croppedProc = resizedProc.crop();
+      resizedProc.resetRoi();
+      for (int i = 0; i < 2 * width / 3; i++) {
+        for (int j = 0; j < 2 * height / 3; j++) {
+          resizedProc.set(width / 6 + i, height / 6 + j, croppedProc.get(i, j));
+        }
+      }
+      for (int i = width / 6; i >= 0; i--) {
+        for (int j = 0; j < height; j++) {
+          resizedProc.set(i, j, resizedProc.get(width / 3 - i + 1, j));
+        }
+      }
+      for (int i = 5 * width / 6; i < width; i++) {
+        for (int j = 0; j < height; j++) {
+          resizedProc.set(i, j, resizedProc.get(2 * (5 * width / 6) - i - 1, j));
+        }
+      }
+      for (int j = height / 6; j >= 0; j--) {
+        for (int i = 0; i < width; i++) {
+          resizedProc.set(i, j, resizedProc.get(i, height / 3 - j + 1));
+        }
+      }
+      for (int j = 5 * height / 6; j < height; j++) {
+        for (int i = 0; i < width; i++) {
+          resizedProc.set(i, j, resizedProc.get(i, 2 * (5 * height / 6) - j - 1));
+        }
+      }
+      imagenProfundidadesResized.setProcessor(resizedProc);
     }
 
     public void mouseMoved(MouseEvent e) {
       int
         xCuadrante = (int)(3 * e.getX() / width),
-        yCuadrante = (int)(3 * e.getY() / height),
+        yCuadrante = (int)(3 * e.getY() / height);
+      moverUICuadrante(xCuadrante, yCuadrante);
+      cuadranteActual = xCuadrante + yCuadrante * 3;
+    }
+
+    private void moverUICuadrante(int xCuadrante, int yCuadrante) {
+      int
         xUICuadrante = xCuadrante * width / 3,
         yUICuadrante = yCuadrante * height / 3;
-      cuadranteActual = xCuadrante + yCuadrante * 3;
       uiCuadrante.setBounds(
         xUICuadrante,
         yUICuadrante,
         anchoUICuadrante,
         altoUICuadrante
       );
-      System.out.println("El mouse esta sobre el cuadrante " + cuadranteActual);
-      imprimirZs();
-    }
-
-    private void imprimirZs() {
-      for (int i = 0; i < zEnCuadrante.length; i++) {
-        for (int j = 0; j < zEnCuadrante[0].length; j++) {
-          if ((j + 1) % 3 == 0) {
-            System.out.println(zEnCuadrante[i][j]);
-          }
-          else {
-            System.out.print(zEnCuadrante[i][j] + ",");
-          }
-        }
-      }
     }
 
     public void mouseDragged(MouseEvent e) {
