@@ -844,7 +844,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
 
     private void actualizarProyeccion() {
       for (int j = 0; j < zEnCuadrante[frameActual].length; j++) {
-        stackProfundidades.setVoxel(j % 3, j / 3, 0, 65000 * zEnCuadrante[frameActual][j] / zs);
+        stackProfundidades.setVoxel(j % 3, j / 3, 0, 65000 * zEnCuadrante[frameActual][j]);
       }
       ImageProcessor proc = imagenProfundidades.getProcessor();
       proc.setInterpolationMethod(ImageProcessor.BICUBIC);
@@ -878,6 +878,19 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
         }
       }
       imagenProfundidadesResized.setProcessor(resizedProc);
+      ImagePlus copia = image.duplicate();
+      for (int i = 0; i < width; i++) {
+        for (int j = 0; j < height; j++) {
+          for (int k = 0; k < zs; k++) {
+            copia.setSlice(k);
+            if (k > imagenProfundidadesResized.getProcessor().getPixel(i, j) / 65000) {
+              copia.getProcessor().set(i, j, 0);
+            }
+          }
+        }
+      }
+      //copia.show();
+      contenedorImagen.test(copia.getStack());
     }
 
     public void mouseMoved(MouseEvent e) {
@@ -904,13 +917,28 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
     }
 
     private class ContenedorImagen extends JPanel {
+
+      ImageCanvas canvas;
+      ImagePlus canvasImage;
       
-      public ContenedorImagen(ImagePlus image, MouseMotionListener listener) {
+      public ContenedorImagen(ImagePlus im, MouseMotionListener listener) {
         setMaximumSize(new Dimension(width, height));
         setPreferredSize(new Dimension(width, height));
-        ImageCanvas ic = new ImageCanvas(image);
-        ic.addMouseMotionListener(listener);
-        add(ic);
+        this.canvasImage = im;
+        this.canvas = new ImageCanvas(this.canvasImage);
+        this.canvas.addMouseMotionListener(listener);
+        add(this.canvas);
+      }
+
+      public void test(ImageStack profundidades) {
+        ZProjector projector = new ZProjector(new ImagePlus("Projection", profundidades));
+        projector.setMethod(ZProjector.MAX_METHOD);
+        projector.setStartSlice(1);
+        projector.setStopSlice(zs);
+        projector.doProjection();
+
+        this.canvasImage.getProcessor().setPixels(projector.getProjection().getProcessor().getPixels());
+        this.canvas.setImageUpdated();
       }
       
     }
