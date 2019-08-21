@@ -158,6 +158,39 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
   
     // aca empieza la magia 
     SliderWind(); 
+
+    mostrarProyecciones();
+  }
+
+  private void mostrarProyecciones() {
+    ImageStack stackProyecciones = new ImageStack(width, height);     
+    for(int z = 0; z < tiempos; z++) {
+      ZProjector projector = new ZProjector(image); 
+      projector.setMethod(ZProjector.MAX_METHOD);
+      projector.setStartSlice(z * zs);
+      projector.setStopSlice((z + 1) * zs - 1);
+      projector.doProjection();
+      stackProyecciones.addSlice(projector.getProjection().getProcessor());          
+    }
+    ImagePlus impProyecciones = new ImagePlus("Nice plugin", stackProyecciones);
+    impProyecciones.show();
+    construirOverlay(impProyecciones);
+  }
+
+  private void construirOverlay(ImagePlus imp) {
+    Overlay overlay = new Overlay();
+    agregarLineaAOverlay(overlay, width / 3, 0, width / 3, height);
+    agregarLineaAOverlay(overlay, 2 * width / 3, 0, 2 * width / 3, height);
+    agregarLineaAOverlay(overlay, 0, height / 3, width, height /3);
+    agregarLineaAOverlay(overlay, 0, 2 * height / 3, width, 2 * height /3);
+    imp.setOverlay(overlay);
+  }
+
+  private void agregarLineaAOverlay(Overlay overlay, int x1, int y1, int x2, int y2) {
+    Roi line = new Line(x1, y1, x2, y2);
+    line.setStrokeColor(Color.green);
+    line.setStrokeWidth(1);
+    overlay.add(line);
   }
   
   /// La ventana principal del menu de seleccion de valores
@@ -798,7 +831,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
 
   class MyWindow extends JFrame implements MouseMotionListener {
 
-    private UICuadrante uiCuadrante;
+    // private UICuadrante uiCuadrante;
     private ContenedorImagen contenedorImagen;
     private final int anchoUICuadrante = 20;
     private final int altoUICuadrante = 60;
@@ -819,8 +852,8 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
       this.setTitle("Prueba OverlayLayout");
       this.zEnCuadrante = new int[numeroDeFramesSeleccionados][nCuadrantes];
 
-      uiCuadrante = new UICuadrante();
-      uiCuadrante.setBounds(width / 3, 0, anchoUICuadrante, altoUICuadrante);
+      // uiCuadrante = new UICuadrante();
+      // uiCuadrante.setBounds(width / 3, 0, anchoUICuadrante, altoUICuadrante);
 
       contenedorImagen = new ContenedorImagen(image, this);
       contenedorImagen.setBounds(0, 0, width, height);
@@ -828,7 +861,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
       layered = new JLayeredPane();
       layered.setPreferredSize(new Dimension(width, height));
       layered.add(contenedorImagen, new Integer(1));
-      layered.add(uiCuadrante, new Integer(2));
+      // layered.add(uiCuadrante, new Integer(2));
 
       this.setLayout(new BorderLayout());
       this.add(new JLabel("test"), BorderLayout.NORTH);
@@ -897,21 +930,21 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
       int
         xCuadrante = (int)(3 * e.getX() / width),
         yCuadrante = (int)(3 * e.getY() / height);
-      moverUICuadrante(xCuadrante, yCuadrante);
+      // moverUICuadrante(xCuadrante, yCuadrante);
       cuadranteActual = xCuadrante + yCuadrante * 3;
     }
 
-    private void moverUICuadrante(int xCuadrante, int yCuadrante) {
-      int
-        xUICuadrante = xCuadrante * width / 3,
-        yUICuadrante = yCuadrante * height / 3;
-      uiCuadrante.setBounds(
-        xUICuadrante,
-        yUICuadrante,
-        anchoUICuadrante,
-        altoUICuadrante
-      );
-    }
+    // private void moverUICuadrante(int xCuadrante, int yCuadrante) {
+    //   int
+    //     xUICuadrante = xCuadrante * width / 3,
+    //     yUICuadrante = yCuadrante * height / 3;
+    //   uiCuadrante.setBounds(
+    //     xUICuadrante,
+    //     yUICuadrante,
+    //     anchoUICuadrante,
+    //     altoUICuadrante
+    //   );
+    // }
 
     public void mouseDragged(MouseEvent e) {
     }
@@ -1323,7 +1356,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
   public static void main(String[] args) {
     new ImageJ();
     System.out.println("Working Directory = " + System.getProperty("user.dir"));
-    ImagePlus image = IJ.openVirtual("C:/Users/Alejandro/Desktop/java/epithelium-projection/examples/sshort sequence-1.tif");      
+    ImagePlus image = IJ.openVirtual(args[0]);      
     IJ.runPlugIn(image, "Proyeccion_General_Final", "parameter=value");
     WindowManager.addWindow(image.getWindow());
   }
