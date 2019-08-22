@@ -55,7 +55,7 @@ import javax.swing.WindowConstants;
 import javax.swing.OverlayLayout;;
 import javax.swing.border.EmptyBorder;
 
-public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
+public class Proyeccion_General_Final extends JFrame implements PlugInFilter, ActionListener {
 
   private static int tiempos;
   private static String direc;
@@ -175,6 +175,7 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
     ImagePlus impProyecciones = new ImagePlus("Nice plugin", stackProyecciones);
     impProyecciones.show();
     construirOverlay(impProyecciones);
+    construirInterfaz(impProyecciones);
   }
 
   private void construirOverlay(ImagePlus imp) {
@@ -191,6 +192,30 @@ public class Proyeccion_General_Final extends JFrame implements PlugInFilter {
     line.setStrokeColor(Color.green);
     line.setStrokeWidth(1);
     overlay.add(line);
+  }
+
+  private void construirInterfaz(ImagePlus impProyecciones) {
+    impProyecciones.getWindow().add(construirBotonera());
+    impProyecciones.getWindow().pack();
+  }
+
+  private int[][] profundidades;
+
+  private JPanel construirBotonera() {
+    profundidades = new int[tiempos][9];
+    JPanel panel = new JPanel();
+    panel.setLayout(new GridLayout(3, 3));
+    for (int i = 0; i < 9; i++) {
+      JButton botonCuadrante = new JButton("" + profundidades[0][i]);
+      botonCuadrante.addActionListener(this);
+      panel.add(botonCuadrante);
+    }
+    return panel;
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    profundidades[0][0]++;
   }
   
   /// La ventana principal del menu de seleccion de valores
