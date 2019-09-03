@@ -1,22 +1,17 @@
-import flanagan.analysis.SurfaceSmooth;
+import flanagan.interpolation.*;
 
 class Test {
 
   static public void main(String[] args) {
-    double[] xData = new double[] { 0, 10, 20 };
-    double[] yData = new double[] { 0, 10, 20 };
-    double[][] zData = new double[3][3];
-    zData[0][0] = 1;
-    zData[0][1] = 1;
-    zData[0][2] = 1;
-    zData[1][0] = 0;
-    zData[1][1] = 0;
-    zData[1][2] = 0;
-    zData[2][0] = 1;
-    zData[2][1] = 1;
-    zData[2][2] = 1;
-    SurfaceSmooth surface = new SurfaceSmooth(xData, yData, zData);
-   // System.out.println(surface.interpolateSavitzkyGolay(0.5, 0.5));
-    System.out.println(surface.savitzkyGolay(3, 3)[0][0]);
+    double[] x1Data = { 0, 10, 20 };
+    double[] x2Data = { 0, 10, 20 };
+    double[][] yData = {
+      { 0, 0, 0 },
+      { 1, 1, 1 },
+      { 2, 2, 2 }
+    };
+    BiCubicSpline surface = new BiCubicSpline(x1Data, x2Data, yData);
+    // System.out.println(surface.interpolateSavitzkyGolay(0.5, 0.5));
+    System.out.println(surface.interpolate(15, 15));
   }
 }

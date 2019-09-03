@@ -1,80 +1,44 @@
 import ij.*;
-import java.util.Observable;
-import java.util.Observer;
-import java.util.Vector;
-
 import ij.process.*;
-import ij.plugin.Duplicator;
-import ij.plugin.ZProjector;
-import ij.plugin.filter.Analyzer;
-import ij.plugin.filter.ExtendedPlugInFilter;
-import ij.plugin.filter.PlugInFilter;
-import ij.plugin.filter.PlugInFilterRunner;
-import ij.gui.DialogListener;
-import ij.gui.GenericDialog;
-import ij.measure.Calibration;
-import ij.measure.ResultsTable;
-import ij.measure.SplineFitter;
-import ij.gui.ImageCanvas;
-import ij.gui.ImageWindow;
-import ij.gui.Line;
-import ij.gui.NonBlockingGenericDialog;
-import ij.gui.OvalRoi;
-import ij.gui.Overlay;
-import ij.gui.PointRoi;
-import ij.gui.PolygonRoi;
-import ij.gui.Roi;
-import ij.gui.StackWindow;
-import ij.gui.TextRoi;
-import ij.plugin.PlugIn; 
 import ij.plugin.*; 
+import ij.plugin.filter.PlugInFilter;
+import ij.gui.*;
 
 import java.awt.*;
-import java.awt.event.MouseWheelListener;
-import java.awt.event.WindowEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ComponentListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelEvent;
+
+import flanagan.interpolation.*;
 
 public class Proyeccion_General_Final implements PlugInFilter, ActionListener {
 
-  private static int tiempos;
-  private static int width;
-  private static int height;
-  private static int zs;
+  private static int frames, width, height, slices;
 
-  private ImagePlus image;
-  private ImageStack stack;
+  private ImagePlus originalImage, processedImage;
+  private ImagePlus impProyecciones;
   
   public int setup(String arg, ImagePlus imp) {
     return STACK_REQUIRED | DOES_ALL;
   }
       
   public void run(ImageProcessor ip) {
-    image = WindowManager.getCurrentImage(); 
-    stack = image.getStack();
-    tiempos = image.getNFrames();
-    zs = stack.getSize()/tiempos;
-    width = stack.getWidth();
-    height = stack.getHeight();
+    ImagePlus image = WindowManager.getCurrentImage(); 
+    originalImage = image.duplicate();
+    processedImage = image.duplicate();
+    frames = image.getNFrames();
+    slices = image.getStack().getSize() / frames;
+    width = image.getStack().getWidth();
+    height = image.getStack().getHeight();
     mostrarProyecciones();
   }
 
-  private ImagePlus impProyecciones;
-
   private void mostrarProyecciones() {
     ImageStack stackProyecciones = new ImageStack(width, height);     
-    for(int z = 0; z < tiempos; z++) {
-      ZProjector projector = new ZProjector(image); 
+    for(int z = 0; z < frames; z++) {
+      ZProjector projector = new ZProjector(originalImage); 
       projector.setMethod(ZProjector.MAX_METHOD);
-      projector.setStartSlice(z * zs);
-      projector.setStopSlice((z + 1) * zs - 1);
+      projector.setStartSlice(z * slices);
+      projector.setStopSlice((z + 1) * slices - 1);
       projector.doProjection();
       stackProyecciones.addSlice(projector.getProjection().getProcessor());          
     }
@@ -106,17 +70,22 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener {
     impProyecciones.getWindow().pack();
   }
 
-  private int[][] profundidades;
+  private int[][] offset;
+  private int[] base;
   private Button previewButton;
 
   private Panel construirBotonera() {
-    profundidades = new int[tiempos][9];
+    offset = new int[frames][9];
+    base = new int[frames];
+    for (int i = 0; i < frames; i++) {
+      base[i] = 1;
+    }
     Panel container = new Panel();
     container.setLayout(new FlowLayout());
     Panel theNumbers = new Panel();
     theNumbers.setLayout(new GridLayout(4, 3));
     for (int i = 0; i < 9; i++) {
-      TextField tfQuadrant = new TextField("" + profundidades[0][i]);
+      TextField tfQuadrant = new TextField("" + offset[0][i]);
       tfQuadrant.setName("" + i);
       tfQuadrant.addActionListener(this);
       theNumbers.add(tfQuadrant);
@@ -138,33 +107,70 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener {
   
   @Override
   public void actionPerformed(ActionEvent e) {
+    int sliceIndex = impProyecciones.getCurrentSlice() - 1;
     if (e.getSource() == previewButton) {
-      preview();
+      preview(sliceIndex);
     }
     else {
-      int sliceIndex = impProyecciones.getCurrentSlice() - 1;
       int quadrantIndex = Integer.parseInt(((TextField)(e.getSource())).getName());
-      profundidades[sliceIndex][quadrantIndex]++;
+      offset[sliceIndex][quadrantIndex]++;
       imprimirProfundidades();
     }
   }
   
-  private void preview() {
+  private void preview(int frame) {
     System.out.println("preview");
-    for (int i = 0; i < profundidades.length; i++) {
-      for (int j = 0; j < profundidades[i].length; j++) {
-        if (profundidades[i][j] > 0) {
+    for (int i = 0; i < offset.length; i++) {
+      for (int j = 0; j < offset[i].length; j++) {
+        if (offset[i][j] > 0) {
           System.out.println("Hay que procesar la slice " + i);
           break;
         }
       }
     }
+    int b = base[frame];
+    double[] x1Data = { 0, width / 6, width / 2, 5 * width / 6, width };
+    double[] x2Data = { 0, height / 6, height / 2, 5 * height / 6, height };
+    double[][] yData = {
+      { b, b,                b,                b,                b },
+      { b, offset[frame][0], offset[frame][1], offset[frame][2], b },
+      { b, offset[frame][3], offset[frame][4], offset[frame][5], b },
+      { b, offset[frame][6], offset[frame][7], offset[frame][8], b },
+      { b, b,                 b,               b,                b }
+    };
+    BiCubicSpline surface = new BiCubicSpline(x1Data, x2Data, yData);
+    for (int i = 0; i < 10; i++) {
+      for (int j = 0; j < 10; j++) {
+        System.out.print(surface.interpolate(i * width / 10, j * height / 10) + ",");
+      }
+      System.out.println();
+    }
+    for (int i = 0; i < width; i++) {
+      for (int j = 0; j < height; j++) {
+        for (int k = 0; k < slices; k++) {
+          int z = frame * slices + k;
+          if (surface.interpolate(i, j) <= k) {
+            processedImage.getStack().setVoxel(i, j, z, 0);
+          }
+          else {
+            processedImage.getStack().setVoxel(i, j, z, originalImage.getStack().getVoxel(i, j, z));
+          }
+        }
+      }
+    }
+    ZProjector projector = new ZProjector(processedImage); 
+    projector.setMethod(ZProjector.MAX_METHOD);
+    projector.setStartSlice(frame * slices);
+    projector.setStopSlice((frame + 1) * slices - 1);
+    projector.doProjection();
+    impProyecciones.getStack().setProcessor(projector.getProjection().getProcessor(), frame + 1);
+    impProyecciones.updateAndDraw();
   }
   
   private void imprimirProfundidades() {
-    for (int i = 0; i < profundidades.length; i++) {
-      for (int j = 0; j < profundidades[i].length; j++) {
-        System.out.print(profundidades[i][j] + ", ");
+    for (int i = 0; i < offset.length; i++) {
+      for (int j = 0; j < offset[i].length; j++) {
+        System.out.print(offset[i][j] + ", ");
       }
       System.out.println();
     }
