@@ -14,4 +14,7 @@ java -Xmx16g -cp "C:\Fiji.app\jars\ij-1.52n.jar;." Proyeccion_General_Final ./ex
 `
 
 Las dos cosas:
-javac -cp "C:\Fiji.app\jars\ij-1.52n.jar" Proyeccion_General_Final.java && java -Xmx16g -cp "C:\Fiji.app\jars\ij-1.52n.jar;." Proyeccion_General_Final ./examples/sshort-sequence-1.tif
+javac -cp "C:\Fiji.app\jars\ij-1.52n.jar;C:\Users\Alejandro\Desktop\java\epithelium-projection\lib\tinyspline.jar" Proyeccion_General_Final.java && java -Xmx16g -cp "C:\Fiji.app\jars\ij-1.52n.jar;.;C:\Users\Alejandro\Desktop\java\epithelium-projection\lib\tinyspline.jar" Proyeccion_General_Final ./examples/sshort-sequence-1.tif
+
+Las dos cosas test:
+java -cp "C:\Users\Alejandro\Desktop\java\epithelium-projection\lib\flanagan.jar;." Test && javac -cp "C:\Users\Alejandro\Desktop\java\epithelium-projection\lib\flanagan.jar" Test.java
