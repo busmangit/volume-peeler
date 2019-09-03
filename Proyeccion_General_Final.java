@@ -119,37 +119,29 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener {
   }
   
   private void preview(int frame) {
-    System.out.println("preview");
-    for (int i = 0; i < offset.length; i++) {
-      for (int j = 0; j < offset[i].length; j++) {
-        if (offset[i][j] > 0) {
-          System.out.println("Hay que procesar la slice " + i);
-          break;
-        }
-      }
-    }
     int b = base[frame];
     double[] x1Data = { 0, width / 6, width / 2, 5 * width / 6, width };
     double[] x2Data = { 0, height / 6, height / 2, 5 * height / 6, height };
     double[][] yData = {
-      { b, b,                b,                b,                b },
-      { b, offset[frame][0], offset[frame][1], offset[frame][2], b },
-      { b, offset[frame][3], offset[frame][4], offset[frame][5], b },
-      { b, offset[frame][6], offset[frame][7], offset[frame][8], b },
-      { b, b,                 b,               b,                b }
+      { b, b                   , b                   , b                   , b },
+      { b, b + offset[frame][0], b + offset[frame][1], b + offset[frame][2], b },
+      { b, b + offset[frame][3], b + offset[frame][4], b + offset[frame][5], b },
+      { b, b + offset[frame][6], b + offset[frame][7], b + offset[frame][8], b },
+      { b, b                   , b                   , b                   , b }
     };
     BiCubicSpline surface = new BiCubicSpline(x1Data, x2Data, yData);
-    for (int i = 0; i < 10; i++) {
-      for (int j = 0; j < 10; j++) {
-        System.out.print(surface.interpolate(i * width / 10, j * height / 10) + ",");
-      }
-      System.out.println();
-    }
+    double[][] interps = new double[width][height];
     for (int i = 0; i < width; i++) {
       for (int j = 0; j < height; j++) {
-        for (int k = 0; k < slices; k++) {
-          int z = frame * slices + k;
-          if (surface.interpolate(i, j) <= k) {
+        interps[i][j] = surface.interpolate(i, j);
+      }
+    }
+    double[][] pixels = new double[width][height];
+    for (int k = 0; k < slices; k++) {
+      int z = frame * slices + k;
+      for (int i = 0; i < width; i++) {
+        for (int j = 0; j < height; j++) {
+          if (interps[i][j] <= k) {
             processedImage.getStack().setVoxel(i, j, z, 0);
           }
           else {
