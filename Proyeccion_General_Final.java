@@ -7,15 +7,21 @@ import ij.gui.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyListener;
+import java.awt.event.KeyEvent;
 
 import flanagan.interpolation.*;
 
-public class Proyeccion_General_Final implements PlugInFilter, ActionListener {
+public class Proyeccion_General_Final implements PlugInFilter, ActionListener, KeyListener, ImageListener {
 
   private static int frames, width, height, slices;
 
   private ImagePlus originalImage, processedImage;
   private ImagePlus impProyecciones;
+
+  private Button previewButton;
+  private int[][] offset;
+  private TextField[] tfQuadrant;
   
   public int setup(String arg, ImagePlus imp) {
     return STACK_REQUIRED | DOES_ALL;
@@ -29,14 +35,23 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener {
     slices = image.getStack().getSize() / frames;
     width = image.getStack().getWidth();
     height = image.getStack().getHeight();
+    initOffsetsMatrix();
     mostrarProyecciones();
   }
 
+  private void initOffsetsMatrix() {
+    offset = new int[frames][9];
+    for (int frame = 0; frame < frames; frame++) {
+      for (int i = 0; i < 9; i++) {
+        offset[frame][i] = 1;//slices;// / 2;
+      }
+    }
+  }
+
   private void mostrarProyecciones() {
-    ImageStack stackProyecciones = new ImageStack(width, height);     
+    ImageStack stackProyecciones = new ImageStack(width, height);
+    ZProjector projector = new ZProjector(originalImage); 
     for(int z = 0; z < frames; z++) {
-      ZProjector projector = new ZProjector(originalImage); 
-      projector.setMethod(ZProjector.MAX_METHOD);
       projector.setStartSlice(z * slices);
       projector.setStopSlice((z + 1) * slices - 1);
       projector.doProjection();
@@ -44,17 +59,24 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener {
     }
     impProyecciones = new ImagePlus("Nice plugin", stackProyecciones);
     impProyecciones.show();
-    construirOverlay(impProyecciones);
-    construirInterfaz(impProyecciones);
+    impProyecciones.addImageListener(this);
+    construirOverlay();
+    buildUI();
   }
 
-  private void construirOverlay(ImagePlus imp) {
+  private void updateOffsets(int slice) {
+    for (int i = 0; i < 9; i++) {
+      tfQuadrant[i].setText("" + offset[slice - 1][i]);
+    }
+  }
+
+  private void construirOverlay() {
     Overlay overlay = new Overlay();
     agregarLineaAOverlay(overlay, width / 3, 0, width / 3, height);
     agregarLineaAOverlay(overlay, 2 * width / 3, 0, 2 * width / 3, height);
     agregarLineaAOverlay(overlay, 0, height / 3, width, height /3);
     agregarLineaAOverlay(overlay, 0, 2 * height / 3, width, 2 * height /3);
-    imp.setOverlay(overlay);
+    impProyecciones.setOverlay(overlay);
   }
 
   private void agregarLineaAOverlay(Overlay overlay, int x1, int y1, int x2, int y2) {
@@ -64,70 +86,52 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener {
     overlay.add(line);
   }
 
-  private void construirInterfaz(ImagePlus impProyecciones) {
-    Panel botonera = construirBotonera();
-    impProyecciones.getWindow().add(botonera);
-    impProyecciones.getWindow().pack();
-  }
-
-  private int[][] offset;
-  private int[] base;
-  private Button previewButton;
-
-  private Panel construirBotonera() {
-    offset = new int[frames][9];
-    base = new int[frames];
-    for (int i = 0; i < frames; i++) {
-      base[i] = 1;
-    }
+  private void buildUI() {
+    tfQuadrant = new TextField[9];
     Panel container = new Panel();
     container.setLayout(new FlowLayout());
     Panel theNumbers = new Panel();
-    theNumbers.setLayout(new GridLayout(4, 3));
+    theNumbers.setLayout(new GridLayout(3, 3));
     for (int i = 0; i < 9; i++) {
-      TextField tfQuadrant = new TextField("" + offset[0][i]);
-      tfQuadrant.setName("" + i);
-      tfQuadrant.addActionListener(this);
-      theNumbers.add(tfQuadrant);
+      tfQuadrant[i] = new TextField("" + offset[0][i]);
+      tfQuadrant[i].setName("" + i);
+      tfQuadrant[i].addKeyListener(this);
+      theNumbers.add(tfQuadrant[i]);
     }
     CheckboxGroup choice = new CheckboxGroup();
     Checkbox posterior = new Checkbox("Keep posterior part", choice, true);
     Checkbox anterior = new Checkbox("Keep anterior part", choice, false);
-    Panel choiceContainer = new Panel(new GridLayout(3, 1));
+    Panel choiceContainer = new Panel(new GridLayout(2, 1));
     previewButton = new Button("Preview");
     previewButton.addActionListener(this);
     choiceContainer.add(anterior);
     choiceContainer.add(posterior);
-    choiceContainer.add(previewButton);
     container.add(theNumbers);
     container.add(choiceContainer);
+    container.add(previewButton);
     container.add(new Button("Process all frames"));
-    return container;
+    impProyecciones.getWindow().add(container);
+    impProyecciones.getWindow().pack();
   }
   
   @Override
   public void actionPerformed(ActionEvent e) {
-    int sliceIndex = impProyecciones.getCurrentSlice() - 1;
+    int sliceIndex = impProyecciones.getCurrentSlice();
     if (e.getSource() == previewButton) {
       preview(sliceIndex);
-    }
-    else {
-      int quadrantIndex = Integer.parseInt(((TextField)(e.getSource())).getName());
-      offset[sliceIndex][quadrantIndex]++;
-      imprimirProfundidades();
     }
   }
   
   private void preview(int frame) {
-    int b = base[frame];
+    int f = frame - 1;
     double[] x1Data = { 0, width / 6, width / 2, 5 * width / 6, width };
     double[] x2Data = { 0, height / 6, height / 2, 5 * height / 6, height };
     double[][] yData = {
-      { b, b                   , b                   , b                   , b },
-      { b, b + offset[frame][0], b + offset[frame][1], b + offset[frame][2], b },
-      { b, b + offset[frame][3], b + offset[frame][4], b + offset[frame][5], b },
-      { b, b + offset[frame][6], b + offset[frame][7], b + offset[frame][8], b },
-      { b, b                   , b                   , b                   , b }
+      { offset[f][0], offset[f][0], offset[f][1], offset[f][2], offset[f][2] },
+      { offset[f][0], offset[f][0], offset[f][1], offset[f][2], offset[f][2] },
+      { offset[f][3], offset[f][3], offset[f][4], offset[f][5], offset[f][5] },
+      { offset[f][6], offset[f][6], offset[f][7], offset[f][8], offset[f][8] },
+      { offset[f][6], offset[f][6], offset[f][7], offset[f][8], offset[f][8] }
     };
     BiCubicSpline surface = new BiCubicSpline(x1Data, x2Data, yData);
     double[][] interps = new double[width][height];
@@ -137,11 +141,11 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener {
       }
     }
     double[][] pixels = new double[width][height];
-    for (int k = 0; k < slices; k++) {
-      int z = frame * slices + k;
+    for (int k = 1; k <= slices; k++) {
+      int z = f * slices + k;
       for (int i = 0; i < width; i++) {
         for (int j = 0; j < height; j++) {
-          if (interps[i][j] <= k) {
+          if (Math.round(interps[i][j]) >= k) {
             processedImage.getStack().setVoxel(i, j, z, 0);
           }
           else {
@@ -151,11 +155,10 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener {
       }
     }
     ZProjector projector = new ZProjector(processedImage); 
-    projector.setMethod(ZProjector.MAX_METHOD);
-    projector.setStartSlice(frame * slices);
-    projector.setStopSlice((frame + 1) * slices - 1);
+    projector.setStartSlice(f * slices + 1);
+    projector.setStopSlice((f + 1) * slices);
     projector.doProjection();
-    impProyecciones.getStack().setProcessor(projector.getProjection().getProcessor(), frame + 1);
+    impProyecciones.getStack().setProcessor(projector.getProjection().getProcessor(), f + 1);
     impProyecciones.updateAndDraw();
   }
   
@@ -173,5 +176,43 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener {
     ImagePlus image = IJ.openImage(args[0]);      
     IJ.runPlugIn(image, "Proyeccion_General_Final", "parameter=value");
     WindowManager.addWindow(image.getWindow());
+  }
+
+  @Override
+  public void imageClosed(ImagePlus imp) {}
+
+  @Override
+  public void imageOpened(ImagePlus imp) {}
+
+  @Override
+  public void imageUpdated(ImagePlus imp) {
+    updateOffsets(imp.getCurrentSlice());
+  }
+
+  @Override
+  public void keyPressed(KeyEvent e) {}
+
+  @Override
+  public void keyReleased(KeyEvent e) {
+    int quadrantIndex = Integer.parseInt(((TextField)(e.getSource())).getName());
+    int sliceIndex = impProyecciones.getCurrentSlice();
+    switch (e.getKeyChar()) {
+      case '+':
+        offset[sliceIndex - 1][quadrantIndex]++;
+        break;
+      case '-':
+        offset[sliceIndex - 1][quadrantIndex]--;
+        break;
+      default:
+        break;
+    }
+    imprimirProfundidades();
+  }
+
+  @Override
+  public void keyTyped(KeyEvent e) {}
+
+  private void print(String s) {
+    System.out.println(s);
   }
 }
