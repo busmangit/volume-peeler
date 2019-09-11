@@ -17,7 +17,7 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener, K
   private static int frames, width, height, slices;
 
   private ImagePlus originalImage, processedImage;
-  private ImagePlus impProyecciones;
+  private ImagePlus projectionsImage;
 
   private Button previewButton;
   private int[][] offset;
@@ -36,7 +36,7 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener, K
     width = image.getStack().getWidth();
     height = image.getStack().getHeight();
     initOffsetsMatrix();
-    mostrarProyecciones();
+    showProjections();
   }
 
   private void initOffsetsMatrix() {
@@ -48,19 +48,19 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener, K
     }
   }
 
-  private void mostrarProyecciones() {
-    ImageStack stackProyecciones = new ImageStack(width, height);
+  private void showProjections() {
+    ImageStack projectionsStack = new ImageStack(width, height);
     ZProjector projector = new ZProjector(originalImage); 
     for(int z = 0; z < frames; z++) {
       projector.setStartSlice(z * slices);
       projector.setStopSlice((z + 1) * slices - 1);
       projector.doProjection();
-      stackProyecciones.addSlice(projector.getProjection().getProcessor());          
+      projectionsStack.addSlice(projector.getProjection().getProcessor());          
     }
-    impProyecciones = new ImagePlus("Nice plugin", stackProyecciones);
-    impProyecciones.show();
-    impProyecciones.addImageListener(this);
-    construirOverlay();
+    projectionsImage = new ImagePlus("Nice plugin", projectionsStack);
+    projectionsImage.show();
+    projectionsImage.addImageListener(this);
+    buildOverlay();
     buildUI();
   }
 
@@ -70,16 +70,16 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener, K
     }
   }
 
-  private void construirOverlay() {
+  private void buildOverlay() {
     Overlay overlay = new Overlay();
-    agregarLineaAOverlay(overlay, width / 3, 0, width / 3, height);
-    agregarLineaAOverlay(overlay, 2 * width / 3, 0, 2 * width / 3, height);
-    agregarLineaAOverlay(overlay, 0, height / 3, width, height /3);
-    agregarLineaAOverlay(overlay, 0, 2 * height / 3, width, 2 * height /3);
-    impProyecciones.setOverlay(overlay);
+    drawLineInOverlay(overlay, width / 3, 0, width / 3, height);
+    drawLineInOverlay(overlay, 2 * width / 3, 0, 2 * width / 3, height);
+    drawLineInOverlay(overlay, 0, height / 3, width, height / 3);
+    drawLineInOverlay(overlay, 0, 2 * height / 3, width, 2 * height / 3);
+    projectionsImage.setOverlay(overlay);
   }
 
-  private void agregarLineaAOverlay(Overlay overlay, int x1, int y1, int x2, int y2) {
+  private void drawLineInOverlay(Overlay overlay, int x1, int y1, int x2, int y2) {
     Roi line = new Line(x1, y1, x2, y2);
     line.setStrokeColor(Color.green);
     line.setStrokeWidth(1);
@@ -110,13 +110,13 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener, K
     container.add(choiceContainer);
     container.add(previewButton);
     container.add(new Button("Process all frames"));
-    impProyecciones.getWindow().add(container);
-    impProyecciones.getWindow().pack();
+    projectionsImage.getWindow().add(container);
+    projectionsImage.getWindow().pack();
   }
   
   @Override
   public void actionPerformed(ActionEvent e) {
-    int sliceIndex = impProyecciones.getCurrentSlice();
+    int sliceIndex = projectionsImage.getCurrentSlice();
     if (e.getSource() == previewButton) {
       preview(sliceIndex);
     }
@@ -127,11 +127,11 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener, K
     double[] x1Data = { 0, width / 6, width / 2, 5 * width / 6, width };
     double[] x2Data = { 0, height / 6, height / 2, 5 * height / 6, height };
     double[][] yData = {
-      { offset[f][0], offset[f][0], offset[f][1], offset[f][2], offset[f][2] },
-      { offset[f][0], offset[f][0], offset[f][1], offset[f][2], offset[f][2] },
-      { offset[f][3], offset[f][3], offset[f][4], offset[f][5], offset[f][5] },
-      { offset[f][6], offset[f][6], offset[f][7], offset[f][8], offset[f][8] },
-      { offset[f][6], offset[f][6], offset[f][7], offset[f][8], offset[f][8] }
+      { offset[f][0], offset[f][0], offset[f][3], offset[f][6], offset[f][6] },
+      { offset[f][0], offset[f][0], offset[f][3], offset[f][6], offset[f][6] },
+      { offset[f][1], offset[f][1], offset[f][4], offset[f][7], offset[f][7] },
+      { offset[f][2], offset[f][2], offset[f][5], offset[f][8], offset[f][8] },
+      { offset[f][2], offset[f][2], offset[f][5], offset[f][8], offset[f][8] }
     };
     BiCubicSpline surface = new BiCubicSpline(x1Data, x2Data, yData);
     double[][] interps = new double[width][height];
@@ -158,8 +158,8 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener, K
     projector.setStartSlice(f * slices + 1);
     projector.setStopSlice((f + 1) * slices);
     projector.doProjection();
-    impProyecciones.getStack().setProcessor(projector.getProjection().getProcessor(), f + 1);
-    impProyecciones.updateAndDraw();
+    projectionsImage.getStack().setProcessor(projector.getProjection().getProcessor(), f + 1);
+    projectionsImage.updateAndDraw();
   }
   
   private void imprimirProfundidades() {
@@ -195,7 +195,7 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener, K
   @Override
   public void keyReleased(KeyEvent e) {
     int quadrantIndex = Integer.parseInt(((TextField)(e.getSource())).getName());
-    int sliceIndex = impProyecciones.getCurrentSlice();
+    int sliceIndex = projectionsImage.getCurrentSlice();
     switch (e.getKeyChar()) {
       case '+':
         offset[sliceIndex - 1][quadrantIndex]++;
