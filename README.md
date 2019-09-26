@@ -18,4 +18,3 @@ javac -cp "C:\Fiji.app\jars\ij-1.52n.jar;C:\Users\Alejandro\Desktop\java\epithel
 
 Las dos cosas test:
 javac -cp "C:\Users\Alejandro\Desktop\java\epithelium-projection\lib\flanagan.jar" Test.java && java -cp "C:\Users\Alejandro\Desktop\java\epithelium-projection\lib\flanagan.jar;." Test 
-
