@@ -43,7 +43,7 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener, K
     offset = new int[frames][9];
     for (int frame = 0; frame < frames; frame++) {
       for (int i = 0; i < 9; i++) {
-        offset[frame][i] = 1;//slices;// / 2;
+        offset[frame][i] = slices / 2;
       }
     }
   }
@@ -124,14 +124,12 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener, K
   
   private void preview(int frame) {
     int f = frame - 1;
-    double[] x1Data = { 0, width / 6, width / 2, 5 * width / 6, width };
-    double[] x2Data = { 0, height / 6, height / 2, 5 * height / 6, height };
+    double[] x1Data = { width / 6, width / 2, 5 * width / 6 };
+    double[] x2Data = { height / 6, height / 2, 5 * height / 6 };
     double[][] yData = {
-      { offset[f][0], offset[f][0], offset[f][3], offset[f][6], offset[f][6] },
-      { offset[f][0], offset[f][0], offset[f][3], offset[f][6], offset[f][6] },
-      { offset[f][1], offset[f][1], offset[f][4], offset[f][7], offset[f][7] },
-      { offset[f][2], offset[f][2], offset[f][5], offset[f][8], offset[f][8] },
-      { offset[f][2], offset[f][2], offset[f][5], offset[f][8], offset[f][8] }
+      { offset[f][0], offset[f][3], offset[f][6] },
+      { offset[f][1], offset[f][4], offset[f][7] },
+      { offset[f][2], offset[f][5], offset[f][8] }
     };
     BiCubicSpline surface = new BiCubicSpline(x1Data, x2Data, yData);
     double[][] interps = new double[width][height];
