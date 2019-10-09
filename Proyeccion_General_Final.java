@@ -202,9 +202,15 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener, K
         offset[sliceIndex - 1][quadrantIndex]--;
         break;
       default:
+        try {
+          offset[sliceIndex - 1][quadrantIndex] = Integer.parseInt(((TextField)e.getSource()).getText());
+        }
+        catch (Exception ex) {
+          break;
+        }
         break;
     }
-    imprimirProfundidades();
+    //imprimirProfundidades();
   }
 
   @Override
