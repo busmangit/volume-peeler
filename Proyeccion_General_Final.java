@@ -5,14 +5,12 @@ import ij.plugin.filter.PlugInFilter;
 import ij.gui.*;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 
 import flanagan.interpolation.*;
 
-public class Proyeccion_General_Final implements PlugInFilter, ActionListener, KeyListener, ImageListener {
+public class Proyeccion_General_Final
+implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListener {
 
   private static int frames, width, height, slices;
 
@@ -22,6 +20,8 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener, K
   private Button previewButton;
   private int[][] offset;
   private TextField[] tfQuadrant;
+  private Checkbox anteriorCheckbox, posteriorCheckbox;
+  private boolean keepAnteriorPart = true;
   
   public int setup(String arg, ImagePlus imp) {
     return STACK_REQUIRED | DOES_ALL;
@@ -99,13 +99,15 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener, K
       theNumbers.add(tfQuadrant[i]);
     }
     CheckboxGroup choice = new CheckboxGroup();
-    Checkbox posterior = new Checkbox("Keep posterior part", choice, true);
-    Checkbox anterior = new Checkbox("Keep anterior part", choice, false);
+    this.anteriorCheckbox = new Checkbox("Keep anterior part", choice, keepAnteriorPart);
+    this.anteriorCheckbox.addItemListener(this);
+    this.posteriorCheckbox = new Checkbox("Keep posterior part", choice, !keepAnteriorPart);
+    this.posteriorCheckbox.addItemListener(this);
     Panel choiceContainer = new Panel(new GridLayout(2, 1));
     previewButton = new Button("Preview");
     previewButton.addActionListener(this);
-    choiceContainer.add(anterior);
-    choiceContainer.add(posterior);
+    choiceContainer.add(anteriorCheckbox);
+    choiceContainer.add(posteriorCheckbox);
     container.add(theNumbers);
     container.add(choiceContainer);
     container.add(previewButton);
@@ -143,7 +145,8 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener, K
       int z = f * slices + k;
       for (int i = 0; i < width; i++) {
         for (int j = 0; j < height; j++) {
-          if (Math.round(interps[i][j]) >= k) {
+          if ((keepAnteriorPart && Math.round(interps[i][j]) >= k) ||
+            (!keepAnteriorPart && Math.round(interps[i][j]) <= k)) {
             processedImage.getStack().setVoxel(i, j, z, 0);
           }
           else {
@@ -215,6 +218,16 @@ public class Proyeccion_General_Final implements PlugInFilter, ActionListener, K
 
   @Override
   public void keyTyped(KeyEvent e) {}
+
+  @Override
+  public void itemStateChanged(ItemEvent e) {
+    if (e.getSource() == anteriorCheckbox) {
+      keepAnteriorPart = true;
+    }
+    else if (e.getSource() == posteriorCheckbox) {
+      keepAnteriorPart = false;
+    }
+  }
 
   private void print(String s) {
     System.out.println(s);
