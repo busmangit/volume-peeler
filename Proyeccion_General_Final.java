@@ -1,5 +1,6 @@
 import ij.*;
 import ij.process.*;
+import javafx.scene.control.CheckBox;
 import ij.plugin.*; 
 import ij.plugin.filter.PlugInFilter;
 import ij.gui.*;
@@ -20,7 +21,8 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   private Button previewButton, processButton;
   private int[][] offset;
   private TextField[] tfQuadrant;
-  private Checkbox anteriorCheckbox, posteriorCheckbox;
+  private boolean[] frameEnabled;
+  private Checkbox frameEnabledCheckbox, anteriorCheckbox, posteriorCheckbox;
   private boolean keepAnteriorPart = true;
   
   public int setup(String arg, ImagePlus imp) {
@@ -35,6 +37,11 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     slices = image.getStack().getSize() / frames;
     width = image.getStack().getWidth();
     height = image.getStack().getHeight();
+    frameEnabled = new boolean[frames];
+    for (int i = 0; i < frames; i++) {
+      frameEnabled[i] = false;
+    }
+    frameEnabled[0] = frameEnabled[frames - 1] = true;
     initOffsetsMatrix();
     showProjections();
   }
@@ -65,7 +72,10 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   }
 
   private void updateOffsets(int slice) {
+    this.frameEnabledCheckbox.setState(frameEnabled[slice - 1]);
+    this.previewButton.setEnabled(frameEnabled[slice - 1]);
     for (int i = 0; i < 9; i++) {
+      tfQuadrant[i].setEnabled(frameEnabled[slice - 1]);
       tfQuadrant[i].setText("" + offset[slice - 1][i]);
     }
   }
@@ -98,22 +108,34 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
       tfQuadrant[i].addKeyListener(this);
       theNumbers.add(tfQuadrant[i]);
     }
+    this.frameEnabledCheckbox = new Checkbox("Use this frame for interpolation", frameEnabled[0]);
+    this.frameEnabledCheckbox.addItemListener(this);
     CheckboxGroup choice = new CheckboxGroup();
     this.anteriorCheckbox = new Checkbox("Keep anterior part", choice, keepAnteriorPart);
     this.anteriorCheckbox.addItemListener(this);
     this.posteriorCheckbox = new Checkbox("Keep posterior part", choice, !keepAnteriorPart);
     this.posteriorCheckbox.addItemListener(this);
     Panel choiceContainer = new Panel(new GridLayout(2, 1));
-    previewButton = new Button("Preview");
+    previewButton = new Button("Preview this frame");
     previewButton.addActionListener(this);
     processButton = new Button("Process all frames");
     processButton.addActionListener(this);
     choiceContainer.add(anteriorCheckbox);
     choiceContainer.add(posteriorCheckbox);
     container.add(theNumbers);
-    container.add(choiceContainer);
     container.add(previewButton);
+    container.add(choiceContainer);
     container.add(processButton);
+
+
+    Panel baseThresholdPanel = new Panel();
+    baseThresholdPanel.setLayout(new GridLayout(1, 3));
+    baseThresholdPanel.add(new Label("Base threshold:"));
+    baseThresholdPanel.add(new TextField("15"));
+    baseThresholdPanel.add(new Button("Set"));
+
+    projectionsImage.getWindow().add(frameEnabledCheckbox);
+    projectionsImage.getWindow().add(baseThresholdPanel);
     projectionsImage.getWindow().add(container);
     projectionsImage.getWindow().pack();
   }
@@ -208,6 +230,14 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     }
     else if (e.getSource() == posteriorCheckbox) {
       keepAnteriorPart = false;
+    }
+    else if (e.getSource() == frameEnabledCheckbox) {
+      boolean value = frameEnabledCheckbox.getState();
+      frameEnabled[projectionsImage.getCurrentSlice() - 1] = value;
+      for (int i = 0; i < 9; i++) {
+        tfQuadrant[i].setEnabled(value);
+      }
+      previewButton.setEnabled(value);
     }
   }
   
