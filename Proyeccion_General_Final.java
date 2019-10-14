@@ -17,7 +17,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   private ImagePlus originalImage, processedImage;
   private ImagePlus projectionsImage;
 
-  private Button previewButton;
+  private Button previewButton, processButton;
   private int[][] offset;
   private TextField[] tfQuadrant;
   private Checkbox anteriorCheckbox, posteriorCheckbox;
@@ -43,7 +43,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     offset = new int[frames][9];
     for (int frame = 0; frame < frames; frame++) {
       for (int i = 0; i < 9; i++) {
-        offset[frame][i] = slices / 2;
+        offset[frame][i] = slices;
       }
     }
   }
@@ -106,12 +106,14 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     Panel choiceContainer = new Panel(new GridLayout(2, 1));
     previewButton = new Button("Preview");
     previewButton.addActionListener(this);
+    processButton = new Button("Process all frames");
+    processButton.addActionListener(this);
     choiceContainer.add(anteriorCheckbox);
     choiceContainer.add(posteriorCheckbox);
     container.add(theNumbers);
     container.add(choiceContainer);
     container.add(previewButton);
-    container.add(new Button("Process all frames"));
+    container.add(processButton);
     projectionsImage.getWindow().add(container);
     projectionsImage.getWindow().pack();
   }
@@ -121,6 +123,9 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     int sliceIndex = projectionsImage.getCurrentSlice();
     if (e.getSource() == previewButton) {
       preview(sliceIndex);
+    }
+    else if (e.getSource() == processButton) {
+      processAllFrames();
     }
   }
   
@@ -163,20 +168,9 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     projectionsImage.updateAndDraw();
   }
   
-  private void imprimirProfundidades() {
-    for (int i = 0; i < offset.length; i++) {
-      for (int j = 0; j < offset[i].length; j++) {
-        System.out.print(offset[i][j] + ", ");
-      }
-      System.out.println();
-    }
-  }
-  
-  public static void main(String[] args) {
-    new ImageJ();
-    ImagePlus image = IJ.openImage(args[0]);      
-    IJ.runPlugIn(image, "Proyeccion_General_Final", "parameter=value");
-    WindowManager.addWindow(image.getWindow());
+  private void processAllFrames() {
+    System.out.println("process");
+    // hay que ir del 1 al 9 interpolando
   }
 
   @Override
@@ -197,23 +191,11 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   public void keyReleased(KeyEvent e) {
     int quadrantIndex = Integer.parseInt(((TextField)(e.getSource())).getName());
     int sliceIndex = projectionsImage.getCurrentSlice();
-    switch (e.getKeyChar()) {
-      case '+':
-        offset[sliceIndex - 1][quadrantIndex]++;
-        break;
-      case '-':
-        offset[sliceIndex - 1][quadrantIndex]--;
-        break;
-      default:
-        try {
-          offset[sliceIndex - 1][quadrantIndex] = Integer.parseInt(((TextField)e.getSource()).getText());
-        }
-        catch (Exception ex) {
-          break;
-        }
-        break;
+    try {
+      offset[sliceIndex - 1][quadrantIndex] = Integer.parseInt(((TextField)e.getSource()).getText());
     }
-    //imprimirProfundidades();
+    catch (Exception ex) {
+    }
   }
 
   @Override
@@ -228,8 +210,11 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
       keepAnteriorPart = false;
     }
   }
-
-  private void print(String s) {
-    System.out.println(s);
-  }
+  
+  public static void main(String[] args) {
+    new ImageJ();
+    ImagePlus image = IJ.openImage(args[0]);      
+    IJ.runPlugIn(image, "Proyeccion_General_Final", "parameter=value");
+    WindowManager.addWindow(image.getWindow());
+  }  
 }
