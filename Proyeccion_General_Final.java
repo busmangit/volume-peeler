@@ -1,5 +1,6 @@
 import ij.*;
 import ij.process.*;
+import javafx.scene.control.CheckBox;
 import ij.plugin.*; 
 import ij.plugin.filter.PlugInFilter;
 import ij.gui.*;
@@ -20,13 +21,14 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   private Button previewButton, processButton;
   private int[][] offset;
   private TextField[] tfQuadrant;
-  private Checkbox anteriorCheckbox, posteriorCheckbox;
+  private boolean[] frameEnabled;
+  private Checkbox frameEnabledCheckbox, anteriorCheckbox, posteriorCheckbox;
   private boolean keepAnteriorPart = true;
   
   public int setup(String arg, ImagePlus imp) {
     return STACK_REQUIRED | DOES_ALL;
   }
-      
+  
   public void run(ImageProcessor ip) {
     ImagePlus image = WindowManager.getCurrentImage(); 
     originalImage = image.duplicate();
@@ -35,6 +37,11 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     slices = image.getStack().getSize() / frames;
     width = image.getStack().getWidth();
     height = image.getStack().getHeight();
+    frameEnabled = new boolean[frames];
+    for (int i = 0; i < frames; i++) {
+      frameEnabled[i] = false;
+    }
+    frameEnabled[0] = frameEnabled[frames - 1] = true;
     initOffsetsMatrix();
     showProjections();
   }
@@ -65,7 +72,10 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   }
 
   private void updateOffsets(int slice) {
+    this.frameEnabledCheckbox.setState(frameEnabled[slice - 1]);
+    this.previewButton.setEnabled(frameEnabled[slice - 1]);
     for (int i = 0; i < 9; i++) {
+      tfQuadrant[i].setEnabled(frameEnabled[slice - 1]);
       tfQuadrant[i].setText("" + offset[slice - 1][i]);
     }
   }
@@ -98,38 +108,50 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
       tfQuadrant[i].addKeyListener(this);
       theNumbers.add(tfQuadrant[i]);
     }
+    this.frameEnabledCheckbox = new Checkbox("Use this frame for interpolation", frameEnabled[0]);
+    this.frameEnabledCheckbox.addItemListener(this);
     CheckboxGroup choice = new CheckboxGroup();
     this.anteriorCheckbox = new Checkbox("Keep anterior part", choice, keepAnteriorPart);
     this.anteriorCheckbox.addItemListener(this);
     this.posteriorCheckbox = new Checkbox("Keep posterior part", choice, !keepAnteriorPart);
     this.posteriorCheckbox.addItemListener(this);
     Panel choiceContainer = new Panel(new GridLayout(2, 1));
-    previewButton = new Button("Preview");
+    previewButton = new Button("Preview this frame");
     previewButton.addActionListener(this);
     processButton = new Button("Process all frames");
     processButton.addActionListener(this);
     choiceContainer.add(anteriorCheckbox);
     choiceContainer.add(posteriorCheckbox);
     container.add(theNumbers);
-    container.add(choiceContainer);
     container.add(previewButton);
+    container.add(choiceContainer);
     container.add(processButton);
+
+    Panel baseThresholdPanel = new Panel();
+    baseThresholdPanel.setLayout(new GridLayout(1, 3));
+    baseThresholdPanel.add(new Label("Base threshold:"));
+    baseThresholdPanel.add(new TextField("15"));
+    baseThresholdPanel.add(new Button("Set"));
+
+    projectionsImage.getWindow().add(frameEnabledCheckbox);
+    projectionsImage.getWindow().add(baseThresholdPanel);
     projectionsImage.getWindow().add(container);
     projectionsImage.getWindow().pack();
   }
   
   @Override
   public void actionPerformed(ActionEvent e) {
-    int sliceIndex = projectionsImage.getCurrentSlice();
     if (e.getSource() == previewButton) {
-      preview(sliceIndex);
+      int sliceIndex = projectionsImage.getCurrentSlice();
+      projectionsImage.getStack().setProcessor(preview(sliceIndex).getProcessor(), sliceIndex);
+      projectionsImage.updateAndDraw();
     }
     else if (e.getSource() == processButton) {
       processAllFrames();
     }
   }
   
-  private void preview(int frame) {
+  private ImagePlus preview(int frame) {
     int f = frame - 1;
     double[] x1Data = { width / 6, width / 2, 5 * width / 6 };
     double[] x2Data = { height / 6, height / 2, 5 * height / 6 };
@@ -164,13 +186,28 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     projector.setStartSlice(f * slices + 1);
     projector.setStopSlice((f + 1) * slices);
     projector.doProjection();
-    projectionsImage.getStack().setProcessor(projector.getProjection().getProcessor(), f + 1);
-    projectionsImage.updateAndDraw();
+    return projector.getProjection();
   }
   
   private void processAllFrames() {
-    System.out.println("process");
-    // hay que ir del 1 al 9 interpolando
+    for (int cuadrante = 0; cuadrante < 9; cuadrante++) {
+      int frameInicioInterpolacion = 0;
+      for (int frame = 1; frame < frames; frame++) {
+        if (frameEnabled[frame]) {
+          double m = (offset[frame][cuadrante] - offset[frameInicioInterpolacion][cuadrante]) / (1.0 * (frame - frameInicioInterpolacion));
+          for (int i = frameInicioInterpolacion + 1; i < frame; i++) {
+            offset[i][cuadrante] = (int)(offset[frameInicioInterpolacion][cuadrante] + m * (i - frameInicioInterpolacion));
+          }
+          frameInicioInterpolacion = frame;
+        }
+      }
+    }
+    ImageStack projectionsStack = new ImageStack(width, height);
+    for (int frame = 1; frame <= frames; frame++) {
+      projectionsStack.addSlice(preview(frame).getProcessor());
+    }
+    ImagePlus result = new ImagePlus("Super general projection", projectionsStack);
+    result.show();
   }
 
   @Override
@@ -208,6 +245,14 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     }
     else if (e.getSource() == posteriorCheckbox) {
       keepAnteriorPart = false;
+    }
+    else if (e.getSource() == frameEnabledCheckbox) {
+      boolean value = frameEnabledCheckbox.getState();
+      frameEnabled[projectionsImage.getCurrentSlice() - 1] = value;
+      for (int i = 0; i < 9; i++) {
+        tfQuadrant[i].setEnabled(value);
+      }
+      previewButton.setEnabled(value);
     }
   }
   
