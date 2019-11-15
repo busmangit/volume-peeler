@@ -28,7 +28,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   public int setup(String arg, ImagePlus imp) {
     return STACK_REQUIRED | DOES_ALL;
   }
-      
+  
   public void run(ImageProcessor ip) {
     ImagePlus image = WindowManager.getCurrentImage(); 
     originalImage = image.duplicate();
@@ -127,7 +127,6 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     container.add(choiceContainer);
     container.add(processButton);
 
-
     Panel baseThresholdPanel = new Panel();
     baseThresholdPanel.setLayout(new GridLayout(1, 3));
     baseThresholdPanel.add(new Label("Base threshold:"));
@@ -142,16 +141,17 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   
   @Override
   public void actionPerformed(ActionEvent e) {
-    int sliceIndex = projectionsImage.getCurrentSlice();
     if (e.getSource() == previewButton) {
-      preview(sliceIndex);
+      int sliceIndex = projectionsImage.getCurrentSlice();
+      projectionsImage.getStack().setProcessor(preview(sliceIndex).getProcessor(), sliceIndex);
+      projectionsImage.updateAndDraw();
     }
     else if (e.getSource() == processButton) {
       processAllFrames();
     }
   }
   
-  private void preview(int frame) {
+  private ImagePlus preview(int frame) {
     int f = frame - 1;
     double[] x1Data = { width / 6, width / 2, 5 * width / 6 };
     double[] x2Data = { height / 6, height / 2, 5 * height / 6 };
@@ -186,13 +186,29 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     projector.setStartSlice(f * slices + 1);
     projector.setStopSlice((f + 1) * slices);
     projector.doProjection();
-    projectionsImage.getStack().setProcessor(projector.getProjection().getProcessor(), f + 1);
-    projectionsImage.updateAndDraw();
+    return projector.getProjection();
   }
   
   private void processAllFrames() {
     System.out.println("process");
-    // hay que ir del 1 al 9 interpolando
+    int frameInicioInterpolacion = 0;
+    for (int cuadrante = 0; cuadrante < 9; cuadrante++) {
+      for (int frame = 1; frame < frames; frame++) {
+        if (frameEnabled[frame]) {
+          for (int i = frameInicioInterpolacion + 1; i < frame - 1; i++) {
+            int m = (offset[frame][cuadrante] - offset[frameInicioInterpolacion][cuadrante]) / (frame - frameInicioInterpolacion);
+            offset[i][cuadrante] = offset[frameInicioInterpolacion][cuadrante] + m * (i - frameInicioInterpolacion);
+          }
+          frameInicioInterpolacion = frame;
+        }
+      }
+    }
+    ImageStack projectionsStack = new ImageStack(width, height);
+    for(int z = 1; z <= frames; z++) {
+      projectionsStack.addSlice(preview(z).getProcessor());
+    }
+    ImagePlus result = new ImagePlus("Nice plugin", projectionsStack);
+    result.show();
   }
 
   @Override
