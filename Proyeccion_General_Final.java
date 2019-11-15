@@ -190,7 +190,6 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   }
   
   private void processAllFrames() {
-<<<<<<< HEAD
     for (int cuadrante = 0; cuadrante < 9; cuadrante++) {
       int frameInicioInterpolacion = 0;
       for (int frame = 1; frame < frames; frame++) {
@@ -198,33 +197,16 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
           double m = (offset[frame][cuadrante] - offset[frameInicioInterpolacion][cuadrante]) / (1.0 * (frame - frameInicioInterpolacion));
           for (int i = frameInicioInterpolacion + 1; i < frame; i++) {
             offset[i][cuadrante] = (int)(offset[frameInicioInterpolacion][cuadrante] + m * (i - frameInicioInterpolacion));
-=======
-    System.out.println("process");
-    int frameInicioInterpolacion = 0;
-    for (int cuadrante = 0; cuadrante < 9; cuadrante++) {
-      for (int frame = 1; frame < frames; frame++) {
-        if (frameEnabled[frame]) {
-          for (int i = frameInicioInterpolacion + 1; i < frame - 1; i++) {
-            int m = (offset[frame][cuadrante] - offset[frameInicioInterpolacion][cuadrante]) / (frame - frameInicioInterpolacion);
-            offset[i][cuadrante] = offset[frameInicioInterpolacion][cuadrante] + m * (i - frameInicioInterpolacion);
->>>>>>> d58feed40052c9f522f441b675e7b90df3e7635c
           }
           frameInicioInterpolacion = frame;
         }
       }
     }
     ImageStack projectionsStack = new ImageStack(width, height);
-<<<<<<< HEAD
     for (int frame = 1; frame <= frames; frame++) {
       projectionsStack.addSlice(preview(frame).getProcessor());
     }
     ImagePlus result = new ImagePlus("Super general projection", projectionsStack);
-=======
-    for(int z = 1; z <= frames; z++) {
-      projectionsStack.addSlice(preview(z).getProcessor());
-    }
-    ImagePlus result = new ImagePlus("Nice plugin", projectionsStack);
->>>>>>> d58feed40052c9f522f441b675e7b90df3e7635c
     result.show();
   }
 
