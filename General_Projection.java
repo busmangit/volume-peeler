@@ -1,6 +1,5 @@
 import ij.*;
 import ij.process.*;
-import javafx.scene.control.CheckBox;
 import ij.plugin.*; 
 import ij.plugin.filter.PlugInFilter;
 import ij.gui.*;
@@ -8,20 +7,20 @@ import ij.gui.*;
 import java.awt.*;
 import java.awt.event.*;
 
-//import flanagan.interpolation.*;
-
 public class General_Projection
 implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListener {
 
   private static int frames, width, height, slices;
+  private static final String PLUGIN_NAME = "General_Projection";
 
   private ImagePlus originalImage, processedImage;
   private ImagePlus projectionsImage;
 
-  private Button previewButton, processButton;
+  private Button previewButton, processButton, baseThresholdButton;
   private int[][] offset;
   private TextField[] tfQuadrant;
   private boolean[] frameEnabled;
+  private TextField baseThresholdTextField;
   private Checkbox frameEnabledCheckbox, anteriorCheckbox, posteriorCheckbox;
   private boolean keepAnteriorPart = true;
   
@@ -38,9 +37,6 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     width = image.getStack().getWidth();
     height = image.getStack().getHeight();
     frameEnabled = new boolean[frames];
-    for (int i = 0; i < frames; i++) {
-      frameEnabled[i] = false;
-    }
     frameEnabled[0] = frameEnabled[frames - 1] = true;
     initOffsetsMatrix();
     showProjections();
@@ -64,7 +60,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
       projector.doProjection();
       projectionsStack.addSlice(projector.getProjection().getProcessor());          
     }
-    projectionsImage = new ImagePlus("Nice plugin", projectionsStack);
+    projectionsImage = new ImagePlus(PLUGIN_NAME, projectionsStack);
     projectionsImage.show();
     projectionsImage.addImageListener(this);
     buildOverlay();
@@ -111,9 +107,9 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     this.frameEnabledCheckbox = new Checkbox("Use this frame for interpolation", frameEnabled[0]);
     this.frameEnabledCheckbox.addItemListener(this);
     CheckboxGroup choice = new CheckboxGroup();
-    this.anteriorCheckbox = new Checkbox("Keep anterior part", choice, keepAnteriorPart);
+    this.anteriorCheckbox = new Checkbox("Keep posterior part", choice, keepAnteriorPart);
     this.anteriorCheckbox.addItemListener(this);
-    this.posteriorCheckbox = new Checkbox("Keep posterior part", choice, !keepAnteriorPart);
+    this.posteriorCheckbox = new Checkbox("Keep anterior part", choice, !keepAnteriorPart);
     this.posteriorCheckbox.addItemListener(this);
     Panel choiceContainer = new Panel(new GridLayout(2, 1));
     previewButton = new Button("Preview this frame");
@@ -130,8 +126,11 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     Panel baseThresholdPanel = new Panel();
     baseThresholdPanel.setLayout(new GridLayout(1, 3));
     baseThresholdPanel.add(new Label("Base threshold:"));
-    baseThresholdPanel.add(new TextField("15"));
-    baseThresholdPanel.add(new Button("Set"));
+    baseThresholdTextField = new TextField("15");
+    baseThresholdPanel.add(baseThresholdTextField);
+    baseThresholdButton = new Button("Set");
+    baseThresholdPanel.add(baseThresholdButton);
+    baseThresholdButton.addActionListener(this);
 
     projectionsImage.getWindow().add(frameEnabledCheckbox);
     projectionsImage.getWindow().add(baseThresholdPanel);
@@ -148,6 +147,13 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     }
     else if (e.getSource() == processButton) {
       processAllFrames();
+    }
+    else if (e.getSource() == baseThresholdButton) {
+      int threshold = Integer.parseInt(baseThresholdTextField.getText());
+      for(int quadrant = 0; quadrant < 9; quadrant++) {
+        offset[projectionsImage.getCurrentSlice() - 1][quadrant] = threshold;
+        tfQuadrant[quadrant].setText(threshold + "");
+      }
     }
   }
   
@@ -206,7 +212,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     for (int frame = 1; frame <= frames; frame++) {
       projectionsStack.addSlice(preview(frame).getProcessor());
     }
-    ImagePlus result = new ImagePlus("Super general projection", projectionsStack);
+    ImagePlus result = new ImagePlus("Result", projectionsStack);
     result.show();
   }
 
@@ -218,7 +224,9 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
 
   @Override
   public void imageUpdated(ImagePlus imp) {
-    updateOffsets(imp.getCurrentSlice());
+    if (WindowManager.getCurrentImage().getTitle().indexOf(PLUGIN_NAME) == 0) {
+      updateOffsets(imp.getCurrentSlice());
+    }
   }
 
   @Override
@@ -248,7 +256,12 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     }
     else if (e.getSource() == frameEnabledCheckbox) {
       boolean value = frameEnabledCheckbox.getState();
-      frameEnabled[projectionsImage.getCurrentSlice() - 1] = value;
+      int currentFrame = projectionsImage.getCurrentSlice() - 1;
+      if (currentFrame == 0 || currentFrame == frames - 1) {
+        frameEnabledCheckbox.setState(true);
+        return;
+      }
+      frameEnabled[currentFrame] = value;
       for (int i = 0; i < 9; i++) {
         tfQuadrant[i].setEnabled(value);
       }
@@ -259,7 +272,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   public static void main(String[] args) {
     new ImageJ();
     ImagePlus image = IJ.openImage(args[0]);      
-    IJ.runPlugIn(image, "Proyeccion_General_Final", "parameter=value");
+    IJ.runPlugIn(image, PLUGIN_NAME, "parameter=value");
     WindowManager.addWindow(image.getWindow());
   }  
 }

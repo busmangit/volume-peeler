@@ -26,4 +26,4 @@ mvn package
 
 
 Las dos cosas mauricio:
-javac -cp "C:\Users\aleja\Desktop\java\Fiji.app\jars\ij-1.52p.jar;C:\Users\aleja\Desktop\java\epithelium-projection\lib\flanagan-master\target\flanagan-1.1.jar" Proyeccion_General_Final.java && java -Xmx16g -cp "C:\Users\aleja\Desktop\java\Fiji.app\jars\ij-1.52p.jar;.;C:\Users\aleja\Desktop\java\epithelium-projection\lib\flanagan-master\target\flanagan-1.1.jar" Proyeccion_General_Final ./examples/sshort-sequence-1.tif
+javac -cp "C:\Users\aleja\Desktop\java\Fiji.app\jars\ij-1.52p.jar;." General_Projection.java && java -Xmx16g -cp "C:\Users\aleja\Desktop\java\Fiji.app\jars\ij-1.52p.jar;." General_Projection ./examples/sshort-sequence-1.tif

@@ -313,7 +313,7 @@ public class Sphere_Projection implements ExtendedPlugInFilter, DialogListener {
   public static void main(String[] args) {
     new ImageJ();
     ImagePlus image = IJ.openImage(args[0]);
-    IJ.runPlugIn(image, "Proyeccion_Esfera", "parameter=value");
+    IJ.runPlugIn(image, "Sphere_Projection", "parameter=value");
     WindowManager.addWindow(image.getWindow());
   }
 
