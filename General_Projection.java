@@ -11,7 +11,8 @@ public class General_Projection
 implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListener {
 
   private static int frames, width, height, slices;
-  private static final String PLUGIN_NAME = "General_Projection";
+  private final static String PLUGIN_NAME = "General_Projection";
+  private final static String WINDOW_TITLE = PLUGIN_NAME;
 
   private ImagePlus originalImage, processedImage;
   private ImagePlus projectionsImage;
@@ -60,7 +61,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
       projector.doProjection();
       projectionsStack.addSlice(projector.getProjection().getProcessor());          
     }
-    projectionsImage = new ImagePlus(PLUGIN_NAME, projectionsStack);
+    projectionsImage = new ImagePlus(WINDOW_TITLE, projectionsStack);
     projectionsImage.show();
     projectionsImage.addImageListener(this);
     buildOverlay();
@@ -224,7 +225,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
 
   @Override
   public void imageUpdated(ImagePlus imp) {
-    if (WindowManager.getCurrentImage().getTitle().indexOf(PLUGIN_NAME) == 0) {
+    if (WindowManager.getCurrentImage().getTitle().indexOf(WINDOW_TITLE) == 0) {
       updateOffsets(imp.getCurrentSlice());
     }
   }
