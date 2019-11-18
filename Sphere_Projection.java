@@ -12,7 +12,7 @@ import java.awt.Color;
 import java.awt.AWTEvent;
 import java.awt.Label;
 
-public class Proyeccion_Esfera implements ExtendedPlugInFilter, DialogListener {
+public class Sphere_Projection implements ExtendedPlugInFilter, DialogListener {
 
   private int FLAGS = STACK_REQUIRED | DOES_ALL;
   private byte[] sourcePixels;

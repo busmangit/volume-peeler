@@ -8,9 +8,9 @@ import ij.gui.*;
 import java.awt.*;
 import java.awt.event.*;
 
-import flanagan.interpolation.*;
+//import flanagan.interpolation.*;
 
-public class Proyeccion_General_Final
+public class General_Projection
 implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListener {
 
   private static int frames, width, height, slices;
