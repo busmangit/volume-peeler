@@ -1,3 +1,4 @@
+package EpitheliumJ;
 import ij.*;
 import ij.process.*;
 import ij.plugin.*; 
@@ -273,7 +274,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   public static void main(String[] args) {
     new ImageJ();
     ImagePlus image = IJ.openImage(args[0]);      
-    IJ.runPlugIn(image, PLUGIN_NAME, "parameter=value");
+    IJ.runPlugIn(image, "EpitheliumJ.General_Projection", "parameter=value");
     WindowManager.addWindow(image.getWindow());
   }  
 }
