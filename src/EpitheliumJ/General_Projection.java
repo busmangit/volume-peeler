@@ -12,7 +12,7 @@ public class General_Projection
 implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListener {
 
   private static int frames, width, height, slices;
-  private final static String PLUGIN_NAME = "General_Projection";
+  private final static String PLUGIN_NAME = "EpitheliumJ.General_Projection";
   private final static String WINDOW_TITLE = PLUGIN_NAME;
 
   private ImagePlus originalImage, processedImage;
@@ -274,7 +274,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   public static void main(String[] args) {
     new ImageJ();
     ImagePlus image = IJ.openImage(args[0]);      
-    IJ.runPlugIn(image, "EpitheliumJ.General_Projection", "parameter=value");
+    IJ.runPlugIn(image, PLUGIN_NAME, "parameter=value");
     WindowManager.addWindow(image.getWindow());
   }  
 }

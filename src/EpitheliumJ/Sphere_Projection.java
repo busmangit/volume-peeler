@@ -16,6 +16,8 @@ import java.awt.Label;
 public class Sphere_Projection implements ExtendedPlugInFilter, DialogListener {
 
   private int FLAGS = STACK_REQUIRED | DOES_ALL;
+  private final static String PLUGIN_NAME = "EpitheliumJ.Sphere_Projection";
+  
   private byte[] sourcePixels;
   private Point[] auxPointsArray;
   private int width, height, nSlices, nFrames, threshold, pixelsPerSlice, pixelsPerFrame;
@@ -314,7 +316,7 @@ public class Sphere_Projection implements ExtendedPlugInFilter, DialogListener {
   public static void main(String[] args) {
     new ImageJ();
     ImagePlus image = IJ.openImage(args[0]);
-    IJ.runPlugIn(image, "Sphere_Projection", "parameter=value");
+    IJ.runPlugIn(image, PLUGIN_NAME, "parameter=value");
     WindowManager.addWindow(image.getWindow());
   }
 
