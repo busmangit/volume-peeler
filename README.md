@@ -1,29 +1,9 @@
-La imagen y el classpath se configuran en .vscode/launch.json
+#Requirements
+* ij-1.52p.jar (or higher)
 
-Para compilar:
+#To run
+* java -Xmx16g -cp "lib/ij-1.52p.jar;." Sphere_Projection ./examples/ejemplo_esfera.tif
+* java -Xmx16g -cp "lib/ij-1.52p.jar;." General_Projection ./examples/sshort-sequence-1.tif
 
-`
-javac -cp "C:\Fiji.app\jars\ij-1.52n.jar" Proyeccion_Esfera.java
-javac -cp "C:\Fiji.app\jars\ij-1.52n.jar" Proyeccion_General_Final.java
-`
-
-Para ejecutar:
-`
-java -Xmx16g -cp "C:\Fiji.app\jars\ij-1.52n.jar;." Proyeccion_Esfera ./examples/ejemplo_esfera.tif
-java -Xmx16g -cp "C:\Fiji.app\jars\ij-1.52n.jar;." Proyeccion_General_Final ./examples/sshort-sequence-1.tif
-`
-
-Las dos cosas:
-javac -cp "C:\Fiji.app\jars\ij-1.52n.jar;C:\Users\Alejandro\Desktop\java\epithelium-projection\lib\flanagan-master\target\flanagan-1.1.jar" Proyeccion_General_Final.java && java -Xmx16g -cp "C:\Fiji.app\jars\ij-1.52n.jar;.;C:\Users\Alejandro\Desktop\java\epithelium-projection\lib\flanagan-master\target\flanagan-1.1.jar" Proyeccion_General_Final ./examples/sshort-sequence-1.tif
-
-Las dos cosas test:
-javac -cp "C:\Users\Alejandro\Desktop\java\epithelium-projection\lib\flanagan.jar" Test.java && java -cp "C:\Users\Alejandro\Desktop\java\epithelium-projection\lib\flanagan.jar;." Test 
-
-Para construir la libreria flanagan:
-ir a C:\Users\Alejandro\Desktop\java\epithelium-projection\lib\flanagan-master
-mvn package
-
-
-
-Las dos cosas mauricio:
-javac -cp "C:\Users\aleja\Desktop\java\Fiji.app\jars\ij-1.52p.jar;." General_Projection.java && java -Xmx16g -cp "C:\Users\aleja\Desktop\java\Fiji.app\jars\ij-1.52p.jar;." General_Projection ./examples/sshort-sequence-1.tif
+#Authors
+Alejandro Lavado, Mauricio Cerda (mauricio.cerda@uchile.cl).
