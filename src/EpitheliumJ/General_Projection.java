@@ -161,6 +161,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   
   private ImagePlus preview(int frame) {
     int f = frame - 1;
+    
     double[] x1Data = { width / 6, width / 2, 5 * width / 6 };
     double[] x2Data = { height / 6, height / 2, 5 * height / 6 };
     double[][] yData = {
@@ -193,7 +194,6 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
       }
     }
     processedImage.setStack(stack);
-    //processedImage.show();
     
     ZProjector projector = new ZProjector(processedImage); 
     projector.setMethod(ZProjector.MAX_METHOD);
