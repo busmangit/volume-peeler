@@ -175,22 +175,28 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
         interps[i][j] = surface.interpolate(i, j);
       }
     }
-    double[][] pixels = new double[width][height];
-    for (int k = 1; k <= slices; k++) {
+    //double[][] pixels = new double[width][height];
+    ImageStack stack = processedImage.getStack();
+    for (int k = 0; k < slices; k++) {
       int z = f * slices + k;
+      
       for (int i = 0; i < width; i++) {
         for (int j = 0; j < height; j++) {
-          if ((keepAnteriorPart && Math.round(interps[i][j]) >= k) ||
-            (!keepAnteriorPart && Math.round(interps[i][j]) <= k)) {
-            processedImage.getStack().setVoxel(i, j, z, 0);
+          if ((keepAnteriorPart && Math.round(interps[i][j]) >= k+1) ||
+             (!keepAnteriorPart && Math.round(interps[i][j]) <= k+1)) {
+            stack.setVoxel(i, j, z, 0);
           }
           else {
-            processedImage.getStack().setVoxel(i, j, z, originalImage.getStack().getVoxel(i, j, z));
+            stack.setVoxel(i, j, z, originalImage.getStack().getVoxel(i, j, z));
           }
         }
       }
     }
+    processedImage.setStack(stack);
+    //processedImage.show();
+    
     ZProjector projector = new ZProjector(processedImage); 
+    projector.setMethod(ZProjector.MAX_METHOD);
     projector.setStartSlice(f * slices + 1);
     projector.setStopSlice((f + 1) * slices);
     projector.doProjection();

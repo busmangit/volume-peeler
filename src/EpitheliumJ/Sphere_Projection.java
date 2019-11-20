@@ -130,7 +130,7 @@ public class Sphere_Projection implements ExtendedPlugInFilter, DialogListener {
       Math.round(100.0 * this.calibZ) / 100.0 + " [" + this.units + "]",
       null, (this.calibX == this.calibY) && (this.calibY == this.calibZ) ? Color.RED : Color.BLACK
     );
-    gd.addSlider("Radius proportion", 0.0, 1.0, 0.94);
+    gd.addSlider("Radius proportion", 0.0, 1.5, 0.94);
     gd.addPreviewCheckbox(pfr);
     gd.addDialogListener(this);
     gd.showDialog();
@@ -171,7 +171,7 @@ public class Sphere_Projection implements ExtendedPlugInFilter, DialogListener {
   public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
     System.out.println("FLAG para DialogItemChanged ");
     this.proportion = (double) gd.getNextNumber();     
-    return !gd.invalidNumber() && this.proportion >= 0 && this.proportion <= 1;
+    return !gd.invalidNumber() && this.proportion >= 0 && this.proportion <= 1.5;
   }
 
   /**
