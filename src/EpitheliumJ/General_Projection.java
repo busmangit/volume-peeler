@@ -137,6 +137,10 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     projectionsImage.getWindow().add(frameEnabledCheckbox);
     projectionsImage.getWindow().add(baseThresholdPanel);
     projectionsImage.getWindow().add(container);
+    
+    String html="v1.0, by SCIAN-Lab 2019, mauricio.cerda@uchile.cl";
+   
+    projectionsImage.getWindow().add( new Label(html) );
     projectionsImage.getWindow().pack();
   }
   

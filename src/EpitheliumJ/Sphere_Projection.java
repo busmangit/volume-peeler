@@ -132,6 +132,10 @@ public class Sphere_Projection implements ExtendedPlugInFilter, DialogListener {
     );
     gd.addSlider("Radius proportion", 0.0, 1.5, 0.94);
     gd.addPreviewCheckbox(pfr);
+    
+    String html="v1.0, by SCIAN-Lab 2019, mauricio.cerda@uchile.cl";
+    
+    gd.addMessage(html);
     gd.addDialogListener(this);
     gd.showDialog();
     okPressed = gd.wasOKed();
