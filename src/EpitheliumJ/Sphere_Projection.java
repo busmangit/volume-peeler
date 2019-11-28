@@ -133,7 +133,7 @@ public class Sphere_Projection implements ExtendedPlugInFilter, DialogListener {
     gd.addSlider("Radius proportion", 0.0, 1.5, 0.94);
     gd.addPreviewCheckbox(pfr);
     
-    String html="v1.0, by SCIAN-Lab 2019, mauricio.cerda@uchile.cl";
+    String html="v1.1, by SCIAN-Lab 2019, mauricio.cerda@uchile.cl";
     
     gd.addMessage(html);
     gd.addDialogListener(this);
@@ -246,7 +246,7 @@ public class Sphere_Projection implements ExtendedPlugInFilter, DialogListener {
     }
     ImagePlus impstack = new ImagePlus("Result", resultsStack);
     impstack.show();
-    table.show("Projection data");
+    table.show("Sphere Projection data");
   }
 
   private void addRowToTable(ResultsTable table, int frame, Sphere sphere) {
@@ -256,6 +256,7 @@ public class Sphere_Projection implements ExtendedPlugInFilter, DialogListener {
     table.addValue("CX", sphere.center.x);
     table.addValue("CY", sphere.center.y);
     table.addValue("CZ", sphere.center.z);
+    table.addValue("Proportion", this.proportion);
   }
 
   private ColorProcessor drawEstimations(ImageProcessor ip) {

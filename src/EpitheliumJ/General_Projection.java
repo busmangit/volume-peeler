@@ -4,12 +4,13 @@ import ij.process.*;
 import ij.plugin.*; 
 import ij.plugin.filter.PlugInFilter;
 import ij.gui.*;
+import ij.measure.ResultsTable;
 
 import java.awt.*;
 import java.awt.event.*;
 
 public class General_Projection
-implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListener {
+implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListener, MouseListener {
 
   private static int frames, width, height, slices;
   private final static String PLUGIN_NAME = "EpitheliumJ.General_Projection";
@@ -18,13 +19,13 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   private ImagePlus originalImage, processedImage;
   private ImagePlus projectionsImage;
 
-  private Button previewButton, processButton, baseThresholdButton;
+  private Button previewButton, processButton, repeatValuesButton, copyMatrixButton;
+  private int toRepeatValue=0;
   private int[][] offset;
   private TextField[] tfQuadrant;
   private boolean[] frameEnabled;
-  private TextField baseThresholdTextField;
   private Checkbox frameEnabledCheckbox, anteriorCheckbox, posteriorCheckbox;
-  private boolean keepAnteriorPart = true;
+  private boolean keepAnteriorPart = false;
   
   public int setup(String arg, ImagePlus imp) {
     return STACK_REQUIRED | DOES_ALL;
@@ -70,12 +71,21 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   }
 
   private void updateOffsets(int slice) {
+	  
     this.frameEnabledCheckbox.setState(frameEnabled[slice - 1]);
     this.previewButton.setEnabled(frameEnabled[slice - 1]);
+    this.repeatValuesButton.setEnabled(false);
+    
+    //saca el cursos
     for (int i = 0; i < 9; i++) {
-      tfQuadrant[i].setEnabled(frameEnabled[slice - 1]);
-      tfQuadrant[i].setText("" + offset[slice - 1][i]);
+      tfQuadrant[i].transferFocus();
     }
+    
+    //desactiva/activa los textField y cambia los valores segun el frame
+    for (int i = 0; i < 9; i++) {
+        tfQuadrant[i].setEnabled(frameEnabled[slice - 1]);
+        tfQuadrant[i].setText("" + offset[slice - 1][i]);
+      }
   }
 
   private void buildOverlay() {
@@ -104,41 +114,57 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
       tfQuadrant[i] = new TextField("" + offset[0][i]);
       tfQuadrant[i].setName("" + i);
       tfQuadrant[i].addKeyListener(this);
+      tfQuadrant[i].addMouseListener(this);
       theNumbers.add(tfQuadrant[i]);
     }
     this.frameEnabledCheckbox = new Checkbox("Use this frame for interpolation", frameEnabled[0]);
     this.frameEnabledCheckbox.addItemListener(this);
+    
     CheckboxGroup choice = new CheckboxGroup();
-    this.anteriorCheckbox = new Checkbox("Keep posterior part", choice, keepAnteriorPart);
+    this.anteriorCheckbox = new Checkbox("Keep higher z", choice, keepAnteriorPart);
     this.anteriorCheckbox.addItemListener(this);
-    this.posteriorCheckbox = new Checkbox("Keep anterior part", choice, !keepAnteriorPart);
+    this.posteriorCheckbox = new Checkbox("Keep lower z", choice, !keepAnteriorPart);
     this.posteriorCheckbox.addItemListener(this);
+    
     Panel choiceContainer = new Panel(new GridLayout(2, 1));
+    choiceContainer.add(anteriorCheckbox);
+    choiceContainer.add(posteriorCheckbox);
+    
     previewButton = new Button("Preview this frame");
     previewButton.addActionListener(this);
     processButton = new Button("Process all frames");
     processButton.addActionListener(this);
-    choiceContainer.add(anteriorCheckbox);
-    choiceContainer.add(posteriorCheckbox);
-    container.add(theNumbers);
-    container.add(previewButton);
-    container.add(choiceContainer);
-    container.add(processButton);
+    Panel buttonsContainer = new Panel(new GridLayout(2, 1));
+    buttonsContainer.add(previewButton);
+    buttonsContainer.add(processButton);
+    
 
-    Panel baseThresholdPanel = new Panel();
-    baseThresholdPanel.setLayout(new GridLayout(1, 3));
-    baseThresholdPanel.add(new Label("Base threshold:"));
-    baseThresholdTextField = new TextField("15");
-    baseThresholdPanel.add(baseThresholdTextField);
-    baseThresholdButton = new Button("Set");
-    baseThresholdPanel.add(baseThresholdButton);
-    baseThresholdButton.addActionListener(this);
+    repeatValuesButton = new Button("Repeat z in this frame");
+    repeatValuesButton.setEnabled(false);
+    repeatValuesButton.addActionListener(this);
+    copyMatrixButton   = new Button("Repeat matrix in all frames");
+    copyMatrixButton.addActionListener(this);
+    
+    Panel buttonsShortcuts = new Panel(new GridLayout(2, 1));
+    buttonsShortcuts.add(repeatValuesButton);
+    buttonsShortcuts.add(copyMatrixButton);
+    
+    Panel labelsContainer = new Panel(new GridLayout(4, 1));
+    labelsContainer.add(new Label("Modify Z  "));
+    labelsContainer.add(new Label("matrix to "));
+    labelsContainer.add(new Label("improve   "));
+    labelsContainer.add(new Label("visualization."));
+    
+    container.add(labelsContainer);
+    container.add(theNumbers);
+    container.add(buttonsShortcuts);
+    container.add(choiceContainer);
+    container.add(buttonsContainer);
 
     projectionsImage.getWindow().add(frameEnabledCheckbox);
-    projectionsImage.getWindow().add(baseThresholdPanel);
     projectionsImage.getWindow().add(container);
     
-    String html="v1.0, by SCIAN-Lab 2019, mauricio.cerda@uchile.cl";
+    String html="v1.1, by SCIAN-Lab 2019, Mauricio.Cerda@uchile.cl";
    
     projectionsImage.getWindow().add( new Label(html) );
     projectionsImage.getWindow().pack();
@@ -154,12 +180,25 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     else if (e.getSource() == processButton) {
       processAllFrames();
     }
-    else if (e.getSource() == baseThresholdButton) {
-      int threshold = Integer.parseInt(baseThresholdTextField.getText());
-      for(int quadrant = 0; quadrant < 9; quadrant++) {
-        offset[projectionsImage.getCurrentSlice() - 1][quadrant] = threshold;
-        tfQuadrant[quadrant].setText(threshold + "");
-      }
+    else if (e.getSource() == repeatValuesButton) {
+    	//toRepeatValue
+    	int currentFrame = projectionsImage.getCurrentSlice() - 1;
+        for (int i = 0; i < 9; i++) {
+            offset[currentFrame][i] = toRepeatValue;
+            tfQuadrant[i].setText("" + toRepeatValue );
+        }
+        repeatValuesButton.setEnabled(false);
+
+    }
+    else if ( e.getSource() == copyMatrixButton) {
+    	
+    	int currentFrame = projectionsImage.getCurrentSlice() - 1;
+    	
+        for (int frame = 0; frame < frames; frame++) {
+            for (int i = 0; i < 9; i++) {
+              offset[frame][i] = offset[currentFrame][i];
+            }
+          }
     }
   }
   
@@ -204,30 +243,61 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     projector.setStartSlice(f * slices + 1);
     projector.setStopSlice((f + 1) * slices);
     projector.doProjection();
-    return projector.getProjection();
+    
+    ImagePlus result = projector.getProjection();
+    
+    //normalizacion?
+    //ContrastEnhancer ce = new ContrastEnhancer();
+    //ce.setNormalize(true);
+    //ce.stretchHistogram(result, 0.1);
+    
+    return result;
   }
   
   private void processAllFrames() {
-    for (int cuadrante = 0; cuadrante < 9; cuadrante++) {
-      int frameInicioInterpolacion = 0;
-      for (int frame = 1; frame < frames; frame++) {
-        if (frameEnabled[frame]) {
-          double m = (offset[frame][cuadrante] - offset[frameInicioInterpolacion][cuadrante]) / (1.0 * (frame - frameInicioInterpolacion));
-          for (int i = frameInicioInterpolacion + 1; i < frame; i++) {
-            offset[i][cuadrante] = (int)(offset[frameInicioInterpolacion][cuadrante] + m * (i - frameInicioInterpolacion));
-          }
-          frameInicioInterpolacion = frame;
-        }
-      }
-    }
-    ImageStack projectionsStack = new ImageStack(width, height);
-    for (int frame = 1; frame <= frames; frame++) {
-      projectionsStack.addSlice(preview(frame).getProcessor());
-    }
-    ImagePlus result = new ImagePlus("Result", projectionsStack);
-    result.show();
+
+	  ResultsTable table = new ResultsTable();
+
+	  for (int cuadrante = 0; cuadrante < 9; cuadrante++) {
+		  int frameInicioInterpolacion = 0;
+		  for (int frame = 1; frame < frames; frame++) {
+			  if (frameEnabled[frame]) {
+				  double m = (offset[frame][cuadrante] - offset[frameInicioInterpolacion][cuadrante]) / (1.0 * (frame - frameInicioInterpolacion));
+				  for (int i = frameInicioInterpolacion + 1; i < frame; i++) {
+					  offset[i][cuadrante] = (int)(offset[frameInicioInterpolacion][cuadrante] + m * (i - frameInicioInterpolacion));
+				  }
+				  frameInicioInterpolacion = frame;
+			  }
+		  }
+	  }
+	  ImageStack projectionsStack = new ImageStack(width, height);
+	  for (int frame = 1; frame <= frames; frame++) {
+		  projectionsStack.addSlice(preview(frame).getProcessor());
+		  addRowToTable(table, frame);
+	  }
+	  
+	  
+	  ImagePlus result = new ImagePlus("Result", projectionsStack);
+	  result.show();
+	  table.show("General Projection data");
   }
 
+  private void addRowToTable(ResultsTable table, int frame) {
+	  table.incrementCounter();
+	  table.addValue("Frame", frame);
+	  table.addValue("Z11", offset[frame-1][0]);
+	  table.addValue("Z12", offset[frame-1][1]);
+	  table.addValue("Z13", offset[frame-1][2]);
+	  table.addValue("Z21", offset[frame-1][3]);
+	  table.addValue("Z22", offset[frame-1][4]);
+	  table.addValue("Z23", offset[frame-1][5]);
+	  table.addValue("Z31", offset[frame-1][6]);
+	  table.addValue("Z32", offset[frame-1][7]);
+	  table.addValue("Z33", offset[frame-1][8]);
+	  table.addValue("Higher", ""+this.keepAnteriorPart);
+
+  }
+  
   @Override
   public void imageClosed(ImagePlus imp) {}
 
@@ -253,6 +323,21 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     }
     catch (Exception ex) {
     }
+    
+    try {
+	toRepeatValue=Integer.parseInt( ((TextField)(e.getSource())).getText() );
+    }
+    catch (Exception ex) {
+    	toRepeatValue=slices;
+    }
+
+    
+	if (toRepeatValue > slices) {
+		toRepeatValue = slices;
+	}
+	if ( toRepeatValue < 1) {
+		toRepeatValue = 1;
+	}
   }
 
   @Override
@@ -286,5 +371,51 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     ImagePlus image = IJ.openImage(args[0]);      
     IJ.runPlugIn(image, PLUGIN_NAME, "parameter=value");
     WindowManager.addWindow(image.getWindow());
-  }  
+  }
+
+@Override
+public void mouseClicked(MouseEvent e) {
+
+    try {
+	toRepeatValue=Integer.parseInt( ((TextField)(e.getSource())).getText() );
+    }
+    catch (Exception ex) {
+    	toRepeatValue=slices;
+    }
+    
+	repeatValuesButton.setEnabled(true);
+
+}
+
+@Override
+public void mousePressed(MouseEvent e) {
+	// TODO Auto-generated method stub
+	
+}
+
+@Override
+public void mouseReleased(MouseEvent e) {
+	
+    try {
+	toRepeatValue=Integer.parseInt( ((TextField)(e.getSource())).getText() );
+    }
+    catch (Exception ex) {
+    	toRepeatValue=slices;
+    }
+    
+	repeatValuesButton.setEnabled(true);
+	
+}
+
+@Override
+public void mouseEntered(MouseEvent e) {
+	// TODO Auto-generated method stub
+	
+}
+
+@Override
+public void mouseExited(MouseEvent e) {
+	// TODO Auto-generated method stub
+	
+}  
 }
