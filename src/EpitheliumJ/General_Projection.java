@@ -164,7 +164,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     projectionsImage.getWindow().add(frameEnabledCheckbox);
     projectionsImage.getWindow().add(container);
     
-    String html="v1.1, by SCIAN-Lab 2019, Mauricio.Cerda@uchile.cl";
+    String html="v1.1, by SCIAN-Lab 2021, Mauricio.Cerda@uchile.cl";
    
     projectionsImage.getWindow().add( new Label(html) );
     projectionsImage.getWindow().pack();
