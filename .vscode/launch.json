@@ -2,11 +2,23 @@
   "configurations": [
     {
       "type": "java",
+      "name": "Launch General_Projection",
+      "request": "launch",
+      "mainClass": "EpitheliumJ.General_Projection",
+      "projectName": "epithelium-projection"
+    },
+    {
+      "type": "java",
       "name": "CodeLens (Launch) - Proyeccion_Esfera",
       "request": "launch",
       "mainClass": "Proyeccion_Esfera",
-      "classPaths": ["C:/Fiji.app/jars/ij-1.52n.jar", "."],
-      "args": ["./examples/ejemplo_esfera.tif"]
+      "classPaths": [
+        "C:/Fiji.app/jars/ij-1.52n.jar",
+        "."
+      ],
+      "args": [
+        "./examples/ejemplo_esfera.tif"
+      ]
     }
   ]
 }

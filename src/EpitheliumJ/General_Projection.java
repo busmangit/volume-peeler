@@ -23,9 +23,12 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   private int toRepeatValue=0;
   private int[][] offset;
   private TextField[] tfQuadrant;
+  private TextField anchoBanda;
+
   private boolean[] frameEnabled;
-  private Checkbox frameEnabledCheckbox, anteriorCheckbox, posteriorCheckbox;
-  private boolean keepAnteriorPart = false;
+  private Checkbox frameEnabledCheckbox, anteriorCheckbox, posteriorCheckbox, bandCheckbox;
+  private boolean keepAnteriorPart = false, bandSelection =false;
+  private int ancho=0; //Ancho de la banda
   
   public int setup(String arg, ImagePlus imp) {
     return STACK_REQUIRED | DOES_ALL;
@@ -65,7 +68,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     }
     projectionsImage = new ImagePlus(WINDOW_TITLE, projectionsStack);
     projectionsImage.show();
-    projectionsImage.addImageListener(this);
+    ImagePlus.addImageListener(this);
     buildOverlay();
     buildUI();
   }
@@ -125,11 +128,21 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     this.anteriorCheckbox.addItemListener(this);
     this.posteriorCheckbox = new Checkbox("Keep lower z", choice, !keepAnteriorPart);
     this.posteriorCheckbox.addItemListener(this);
+    this.bandCheckbox = new Checkbox("Band", choice, bandSelection);
+    this.bandCheckbox.addItemListener(this);
+    this.anchoBanda = new TextField();
+    bandSelection= bandCheckbox.getState();
+    anchoBanda.setEnabled(bandSelection);
+    anchoBanda.setText("" + ancho);
     
-    Panel choiceContainer = new Panel(new GridLayout(2, 1));
+        
+    Panel choiceContainer = new Panel(new GridLayout(4, 1));
     choiceContainer.add(anteriorCheckbox);
     choiceContainer.add(posteriorCheckbox);
+    choiceContainer.add(bandCheckbox);
+    choiceContainer.add(anchoBanda);
     
+        
     previewButton = new Button("Preview this frame");
     previewButton.addActionListener(this);
     processButton = new Button("Process all frames");
@@ -221,17 +234,39 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     }
     //double[][] pixels = new double[width][height];
     ImageStack stack = processedImage.getStack();
-    for (int k = 0; k < slices; k++) {
-      int z = f * slices + k;
-      
-      for (int i = 0; i < width; i++) {
-        for (int j = 0; j < height; j++) {
-          if ((keepAnteriorPart && Math.round(interps[i][j]) >= k+1) ||
-             (!keepAnteriorPart && Math.round(interps[i][j]) <= k+1)) {
-            stack.setVoxel(i, j, z, 0);
+    if (bandSelection) { 
+      //caso banda
+      ancho=Integer.parseInt(this.anchoBanda.getText());
+      for (int k = 0; k < slices; k++) {
+        int z = f * slices + k;
+        
+        for (int i = 0; i < width; i++) {
+          for (int j = 0; j < height; j++) {
+            if (( Math.round(interps[i][j]+ancho) <= k+1) ||
+              (Math.round(interps[i][j]-ancho) >= k+1)) {
+              stack.setVoxel(i, j, z, 0);
+            }
+            else {
+              stack.setVoxel(i, j, z, originalImage.getStack().getVoxel(i, j, z));
+            }
           }
-          else {
-            stack.setVoxel(i, j, z, originalImage.getStack().getVoxel(i, j, z));
+        }
+      }
+    }
+    else {
+    //caso keep lower-higher
+      for (int k = 0; k < slices; k++) {
+        int z = f * slices + k;
+        
+        for (int i = 0; i < width; i++) {
+          for (int j = 0; j < height; j++) {
+            if ((keepAnteriorPart && Math.round(interps[i][j]) >= k+1) ||
+              (!keepAnteriorPart && Math.round(interps[i][j]) <= k+1)) {
+              stack.setVoxel(i, j, z, 0);
+            }
+            else {
+              stack.setVoxel(i, j, z, originalImage.getStack().getVoxel(i, j, z));
+            }
           }
         }
       }
@@ -295,6 +330,8 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
 	  table.addValue("Z32", offset[frame-1][7]);
 	  table.addValue("Z33", offset[frame-1][8]);
 	  table.addValue("Higher", ""+this.keepAnteriorPart);
+    table.addValue("Interpolation", ""+frameEnabled[frame-1] );//Nueva columna
+    
 
   }
   
@@ -347,10 +384,25 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   public void itemStateChanged(ItemEvent e) {
     if (e.getSource() == anteriorCheckbox) {
       keepAnteriorPart = true;
+      bandSelection= bandCheckbox.getState();
+      this.anchoBanda.setEnabled(bandSelection);
+
+
     }
     else if (e.getSource() == posteriorCheckbox) {
       keepAnteriorPart = false;
+      bandSelection= bandCheckbox.getState();
+      this.anchoBanda.setEnabled(bandSelection);
+
     }
+    else if (e.getSource() == bandCheckbox) {
+      keepAnteriorPart = false;
+    }
+    if (bandCheckbox.getState()){
+      bandSelection= bandCheckbox.getState();
+      this.anchoBanda.setEnabled(bandSelection);
+    }
+
     else if (e.getSource() == frameEnabledCheckbox) {
       boolean value = frameEnabledCheckbox.getState();
       int currentFrame = projectionsImage.getCurrentSlice() - 1;
