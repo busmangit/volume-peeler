@@ -11,7 +11,7 @@ import ij.measure.ResultsTable;
 import java.util.HashMap;
 import java.awt.Color;
 import java.awt.AWTEvent;
-import java.awt.Label;
+import java.awt.Label; //revisar
 
 public class Sphere_Projection implements ExtendedPlugInFilter, DialogListener {
 
