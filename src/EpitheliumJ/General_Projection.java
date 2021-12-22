@@ -3,6 +3,7 @@ import ij.*;
 import ij.process.*;
 import ij.plugin.*; 
 import ij.plugin.filter.PlugInFilter;
+
 import ij.gui.*;
 import ij.measure.ResultsTable;
 
@@ -10,9 +11,11 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class General_Projection
-implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListener, MouseListener {
+implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListener, MouseListener, DialogListener {
 
-  private static int frames, width, height, slices;
+  private static int frames, width, height, slices, channel, channelV;
+  private boolean preview = true, okPressed = false;
+
   private final static String PLUGIN_NAME = "EpitheliumJ.General_Projection";
   private final static String WINDOW_TITLE = PLUGIN_NAME;
 
@@ -38,10 +41,33 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     ImagePlus image = WindowManager.getCurrentImage(); 
     originalImage = image.duplicate();
     processedImage = image.duplicate();
-    frames = image.getNFrames();
-    slices = image.getStack().getSize() / frames;
+    channel = image.getNChannels(); //se agrega la información de canales
+    frames = image.getNFrames(); 
+    slices = image.getStack().getSize()/(frames*channel); // se agrega la información de canales
     width = image.getStack().getWidth();
     height = image.getStack().getHeight();
+
+
+    if (channel == 1){
+      System.out.println("Un Canal");
+    }
+    else {
+      System.out.println("Mas de un Canal");
+      GenericDialog gd = new GenericDialog("Se detectó más de un canal");
+      gd.addSlider("Escoja que canal desea usar", 1, channel, 1);
+      gd.addDialogListener(this);
+      gd.showDialog();
+      
+      okPressed = gd.wasOKed();
+      preview = false;
+      System.out.println("Canal seleccionado");
+      System.out.println(channelV);
+
+
+
+    }
+
+
     frameEnabled = new boolean[frames];
     frameEnabled[0] = frameEnabled[frames - 1] = true;
     initOffsetsMatrix();
@@ -59,12 +85,27 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
 
   private void showProjections() {
     ImageStack projectionsStack = new ImageStack(width, height);
-    ZProjector projector = new ZProjector(originalImage); 
-    for(int z = 0; z < frames; z++) {
-      projector.setStartSlice(z * slices);
-      projector.setStopSlice((z + 1) * slices - 1);
+    ImagePlus[] channels = ChannelSplitter.split(originalImage);
+
+    ZProjector projector = new ZProjector(channels[channelV-1]); 
+    projector.setMethod(ZProjector.MAX_METHOD);
+    // System.out.println(channels[0].getNChannels());
+    // System.out.println(channels[0].getNFrames());
+    // System.out.println(channels[0].getStack().getSize());
+    // System.out.println("0---------0");
+    for(int t = 0; t < frames; t++) {
+      projector.setStartSlice(t * slices);
+      // System.out.println("inicio");
+      // System.out.println(t * slices);
+
+      projector.setStopSlice((t + 1) * slices - 1);
+      // System.out.println("fin");
+      // System.out.println((t + 1) * slices - 1);
+ 
       projector.doProjection();
       projectionsStack.addSlice(projector.getProjection().getProcessor());          
+            
+           
     }
     projectionsImage = new ImagePlus(WINDOW_TITLE, projectionsStack);
     projectionsImage.show();
@@ -177,7 +218,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     projectionsImage.getWindow().add(frameEnabledCheckbox);
     projectionsImage.getWindow().add(container);
     
-    String html="v1.1, by SCIAN-Lab 2022, Mauricio.Cerda@uchile.cl";
+    String html="v1.2, by SCIAN-Lab 2022, Mauricio.Cerda@uchile.cl";
    
     projectionsImage.getWindow().add( new Label(html) );
     projectionsImage.getWindow().pack();
@@ -187,7 +228,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   public void actionPerformed(ActionEvent e) {
     if (e.getSource() == previewButton) {
       int sliceIndex = projectionsImage.getCurrentSlice();
-      projectionsImage.getStack().setProcessor(preview(sliceIndex).getProcessor(), sliceIndex);
+      projectionsImage.getStack().setProcessor(preview(sliceIndex,this.channelV).getProcessor(), sliceIndex);
       projectionsImage.updateAndDraw();
     }
     else if (e.getSource() == processButton) {
@@ -215,7 +256,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     }
   }
   
-  private ImagePlus preview(int frame) {
+  private ImagePlus preview(int frame, int selectedchannel) {
     int f = frame - 1;
     
     double[] x1Data = { width / 6, width / 2, 5 * width / 6 };
@@ -233,21 +274,23 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
       }
     }
     //double[][] pixels = new double[width][height];
-    ImageStack stack = processedImage.getStack();
+    ImagePlus[] channels = ChannelSplitter.split(processedImage); //agregada CS
+    ImageStack stack = channels[selectedchannel-1].getStack();
+    ImageStack originalImageonechannel=ChannelSplitter.split(originalImage)[selectedchannel-1].getStack();
     if (bandSelection) { 
       //caso banda
       ancho=Integer.parseInt(this.anchoBanda.getText());
       for (int k = 0; k < slices; k++) {
         int z = f * slices + k;
+        // f*(slices*nchanells)+ slices*(chanell-1)+k
         
         for (int i = 0; i < width; i++) {
           for (int j = 0; j < height; j++) {
-            if (( Math.round(interps[i][j]+ancho) <= k+1) ||
-              (Math.round(interps[i][j]-ancho) >= k+1)) {
-              stack.setVoxel(i, j, z, 0);
+            if (( Math.round(interps[i][j]+ancho) <= k+1) ||  (Math.round(interps[i][j]-ancho) >= k+1)) {
+              stack.setVoxel(i, j, z, originalImageonechannel.getVoxel(i, j, z));
             }
             else {
-              stack.setVoxel(i, j, z, originalImage.getStack().getVoxel(i, j, z));
+              stack.setVoxel(i, j, z, 0);
             }
           }
         }
@@ -265,15 +308,17 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
               stack.setVoxel(i, j, z, 0);
             }
             else {
-              stack.setVoxel(i, j, z, originalImage.getStack().getVoxel(i, j, z));
+              stack.setVoxel(i, j, z, originalImageonechannel.getVoxel(i, j, z));
             }
           }
         }
       }
     }
-    processedImage.setStack(stack);
+    channels[selectedchannel-1].setStack(stack);
     
-    ZProjector projector = new ZProjector(processedImage); 
+    //ZProjector projector = new ZProjector(processedImage); 
+    ZProjector projector = new ZProjector(channels[selectedchannel-1]); 
+
     projector.setMethod(ZProjector.MAX_METHOD);
     projector.setStartSlice(f * slices + 1);
     projector.setStopSlice((f + 1) * slices);
@@ -306,14 +351,26 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
 		  }
 	  }
 	  ImageStack projectionsStack = new ImageStack(width, height);
-	  for (int frame = 1; frame <= frames; frame++) {
-		  projectionsStack.addSlice(preview(frame).getProcessor());
-		  addRowToTable(table, frame);
+	  for (int i=1; i <=channel; i++){
+
+	    for (int frame = 1; frame <= frames; frame++) {
+		    //projectionsStack.addSlice(Integer.toString(index),preview(frame,i).getProcessor());
+        projectionsStack.addSlice(preview(frame,i).getProcessor());
+
+		    if (i==1)
+          addRowToTable(table, frame);
+          
+          
 	  }
-	  
-	  
+    }
+    //ImageStack projectionsStack = new ImageStack(width, height);
 	  ImagePlus result = new ImagePlus("Result", projectionsStack);
-	  result.show();
+    
+    new HyperStackConverter();
+    //result.setDimensions(result.getNChannels()*channel, result.getNSlices()/channel, result.getNFrames());
+    //ImagePlus result2= result;
+    result= HyperStackConverter.toHyperStack(result, result.getNChannels()*channel, result.getNSlices()/channel, result.getNFrames(),"xyzct","color");
+    result.show();
 	  table.show("General Projection data");
   }
 
@@ -331,7 +388,8 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
 	  table.addValue("Z33", offset[frame-1][8]);
 	  table.addValue("Higher", ""+this.keepAnteriorPart);
     table.addValue("Interpolation", ""+frameEnabled[frame-1] );//Nueva columna
-    
+    table.addValue("Band", ""+ ancho*Boolean.compare(bandSelection, false) );//Nueva columna
+
 
   }
   
@@ -419,6 +477,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   }
   
   public static void main(String[] args) {
+
     new ImageJ();
     ImagePlus image = IJ.openImage(args[0]);      
     IJ.runPlugIn(image, PLUGIN_NAME, "parameter=value");
@@ -469,5 +528,15 @@ public void mouseEntered(MouseEvent e) {
 public void mouseExited(MouseEvent e) {
 	// TODO Auto-generated method stub
 	
+}
+
+@Override
+public boolean dialogItemChanged(GenericDialog arg0, AWTEvent arg1) {
+  // TODO Auto-generated method stub
+  arg0.getSliders();
+  channelV = (int) ((Scrollbar)(arg0.getSliders().get(0))).getValue();
+  //System.out.println(channelV);
+  
+  return true;
 }  
 }
