@@ -50,6 +50,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
 
     if (channel == 1){
       System.out.println("Un Canal");
+      this.channelV=1;
     }
     else {
       System.out.println("Mas de un Canal");
@@ -218,7 +219,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     projectionsImage.getWindow().add(frameEnabledCheckbox);
     projectionsImage.getWindow().add(container);
     
-    String html="v1.2, by SCIAN-Lab 2022, Mauricio.Cerda@uchile.cl";
+    String html="v1.6, by SCIAN-Lab 2022, Mauricio.Cerda@uchile.cl";
    
     projectionsImage.getWindow().add( new Label(html) );
     projectionsImage.getWindow().pack();
@@ -394,15 +395,24 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   }
   
   @Override
-  public void imageClosed(ImagePlus imp) {}
+  public void imageClosed(ImagePlus imp) {
+	  ImagePlus.removeImageListener(this);
+  }
 
   @Override
   public void imageOpened(ImagePlus imp) {}
 
   @Override
   public void imageUpdated(ImagePlus imp) {
-    if (WindowManager.getCurrentImage().getTitle().indexOf(WINDOW_TITLE) == 0) {
-      updateOffsets(imp.getCurrentSlice());
+	if ( WindowManager.getCurrentImage() == null) {
+		ImagePlus.removeImageListener(this);
+	}else if (WindowManager.getCurrentImage().getTitle().indexOf(WINDOW_TITLE) == 0) {
+		if( imp.getCurrentSlice() < frames) {
+			updateOffsets(imp.getCurrentSlice());
+		}else {
+			updateOffsets(1);
+		}
+			
     }
   }
 
