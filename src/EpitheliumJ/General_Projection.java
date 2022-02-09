@@ -22,7 +22,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   private ImagePlus originalImage, processedImage;
   private ImagePlus projectionsImage;
 
-  private Button previewButton, processButton, repeatValuesButton, copyMatrixButton;
+  private Button previewButton, processButton, ABCButton, repeatValuesButton, copyMatrixButton;
   private int toRepeatValue=0;
   private int[][] offset;
   private TextField[] tfQuadrant;
@@ -131,6 +131,14 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
         tfQuadrant[i].setEnabled(frameEnabled[slice - 1]);
         tfQuadrant[i].setText("" + offset[slice - 1][i]);
       }
+    //actualiza la matriz de textfield actual
+    if (true){
+
+      int currentFrame = projectionsImage.getCurrentSlice() - 1;
+      for (int i = 0; i < 9; i++) {
+            tfQuadrant[i].setText("" + offset[currentFrame][i] );
+      }
+    }
   }
 
   private void buildOverlay() {
@@ -189,10 +197,15 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     previewButton.addActionListener(this);
     processButton = new Button("Process all frames");
     processButton.addActionListener(this);
-    Panel buttonsContainer = new Panel(new GridLayout(2, 1));
+
+    ABCButton = new Button("Brightness/Contrast");
+    ABCButton.addActionListener(this);
+
+
+    Panel buttonsContainer = new Panel(new GridLayout(3, 1));
     buttonsContainer.add(previewButton);
     buttonsContainer.add(processButton);
-    
+    buttonsContainer.add(ABCButton);
 
     repeatValuesButton = new Button("Repeat z in this frame");
     repeatValuesButton.setEnabled(false);
@@ -219,7 +232,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     projectionsImage.getWindow().add(frameEnabledCheckbox);
     projectionsImage.getWindow().add(container);
     
-    String html="v1.7, by SCIAN-Lab 2022, Mauricio.Cerda@uchile.cl";
+    String html="v1.6, by SCIAN-Lab 2022, Mauricio.Cerda@uchile.cl";
    
     projectionsImage.getWindow().add( new Label(html) );
     projectionsImage.getWindow().pack();
@@ -227,10 +240,22 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   
   @Override
   public void actionPerformed(ActionEvent e) {
+
+  
+   
+    
     if (e.getSource() == previewButton) {
+
       int sliceIndex = projectionsImage.getCurrentSlice();
       projectionsImage.getStack().setProcessor(preview(sliceIndex,this.channelV).getProcessor(), sliceIndex);
       projectionsImage.updateAndDraw();
+
+      
+    }
+    else if (e.getSource() == ABCButton) {
+      IJ.run("Brightness/Contrast...");
+    
+
     }
     else if (e.getSource() == processButton) {
       processAllFrames();
