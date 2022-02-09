@@ -6,4 +6,4 @@
 * java -Xmx16g -cp "lib/ij-1.52p.jar;." General_Projection ./examples/sshort-sequence-1.tif
 
 #Authors
-Alejandro Lavado, Mauricio Cerda (mauricio.cerda@uchile.cl).
+Mauricio Cerda (mauricio.cerda@uchile.cl), Alejandro Lavado, Carlos Navarro

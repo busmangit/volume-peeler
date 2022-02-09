@@ -54,8 +54,8 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     }
     else {
       System.out.println("Mas de un Canal");
-      GenericDialog gd = new GenericDialog("Se detectó más de un canal");
-      gd.addSlider("Escoja que canal desea usar", 1, channel, 1);
+      GenericDialog gd = new GenericDialog("More than 1 channel detected");
+      gd.addSlider("Please select 1 channel", 1, channel, 1);
       gd.addDialogListener(this);
       gd.showDialog();
       
@@ -219,7 +219,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     projectionsImage.getWindow().add(frameEnabledCheckbox);
     projectionsImage.getWindow().add(container);
     
-    String html="v1.6, by SCIAN-Lab 2022, Mauricio.Cerda@uchile.cl";
+    String html="v1.7, by SCIAN-Lab 2022, Mauricio.Cerda@uchile.cl";
    
     projectionsImage.getWindow().add( new Label(html) );
     projectionsImage.getWindow().pack();
