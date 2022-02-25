@@ -232,7 +232,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     projectionsImage.getWindow().add(frameEnabledCheckbox);
     projectionsImage.getWindow().add(container);
     
-    String html="v1.7, by SCIAN-Lab 2022, Mauricio.Cerda@uchile.cl";
+    String html="v1.8, by SCIAN-Lab 2022, Mauricio.Cerda@uchile.cl";
    
     projectionsImage.getWindow().add( new Label(html) );
     projectionsImage.getWindow().pack();
@@ -312,7 +312,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
         
         for (int i = 0; i < width; i++) {
           for (int j = 0; j < height; j++) {
-            if (( Math.round(interps[i][j]+ancho) <= k+1) ||  (Math.round(interps[i][j]-ancho) >= k+1)) {
+            if (( Math.round(interps[i][j]+ancho) >= k+1) &&  (Math.round(interps[i][j]-ancho) <= k+1)) {
               stack.setVoxel(i, j, z, originalImageonechannel.getVoxel(i, j, z));
             }
             else {
