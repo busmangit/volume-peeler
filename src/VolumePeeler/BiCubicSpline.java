@@ -39,7 +39,7 @@
 *
 ***************************************************************************************/
 
-package EpitheliumJ;
+package VolumePeeler;
 
 public class BiCubicSpline{
 

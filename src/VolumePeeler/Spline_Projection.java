@@ -1,4 +1,4 @@
-package EpitheliumJ;
+package VolumePeeler;
 import ij.*;
 import ij.process.*;
 import ij.plugin.*; 
@@ -9,27 +9,36 @@ import ij.measure.ResultsTable;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.*;
 
-public class General_Projection
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
+
+
+public class Spline_Projection
 implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListener, MouseListener, DialogListener {
 
   private static int frames, width, height, slices, channel, channelV;
   private boolean preview = true, okPressed = false;
 
-  private final static String PLUGIN_NAME = "EpitheliumJ.General_Projection";
+  private final static String PLUGIN_NAME = "VolumePeeler.Spline_Projection";
   private final static String WINDOW_TITLE = PLUGIN_NAME;
 
   private ImagePlus originalImage, processedImage;
   private ImagePlus projectionsImage;
 
-  private Button previewButton, processButton, ABCButton, repeatValuesButton, copyMatrixButton;
+  private Button previewButton, processButton, ABCButton, repeatValuesButton, copyMatrixButton, saveButton, loadButton;
   private int toRepeatValue=0;
+  private int tamanooffset=6;
+  
   private int[][] offset;
   private TextField[] tfQuadrant;
   private TextField anchoBanda;
-
-  private boolean[] frameEnabled;
-  private Checkbox frameEnabledCheckbox, anteriorCheckbox, posteriorCheckbox, bandCheckbox;
+  private boolean[] frameEnabled, gridEnabled;
+  private Checkbox frameEnabledCheckbox, anteriorCheckbox, posteriorCheckbox, bandCheckbox, gridCheckbox;
   private boolean keepAnteriorPart = false, bandSelection =false;
   private int ancho=0; //Ancho de la banda
   
@@ -46,8 +55,18 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     slices = image.getStack().getSize()/(frames*channel); // se agrega la información de canales
     width = image.getStack().getWidth();
     height = image.getStack().getHeight();
+    //
+    GenericDialog gd0 = new GenericDialog("Please select number of control points ");
+    gd0.addSlider("Select n for n^2 control points", 3, tamanooffset, 3);
+    gd0.addDialogListener(this);
+    gd0.showDialog();
+    
+    okPressed = gd0.wasOKed();
+    preview = false;
+    tamanooffset=(int)gd0.getNextNumber();
+    System.out.println(tamanooffset);
 
-
+    	
     if (channel == 1){
       System.out.println("Un Canal");
       this.channelV=1;
@@ -68,7 +87,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
 
     }
 
-
+    gridEnabled = new boolean[1];
     frameEnabled = new boolean[frames];
     frameEnabled[0] = frameEnabled[frames - 1] = true;
     initOffsetsMatrix();
@@ -76,9 +95,9 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   }
 
   private void initOffsetsMatrix() {
-    offset = new int[frames][9];
+    offset = new int[frames][tamanooffset*tamanooffset];
     for (int frame = 0; frame < frames; frame++) {
-      for (int i = 0; i < 9; i++) {
+      for (int i = 0; i < tamanooffset*tamanooffset; i++) {
         offset[frame][i] = slices;
       }
     }
@@ -111,7 +130,6 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     projectionsImage = new ImagePlus(WINDOW_TITLE, projectionsStack);
     projectionsImage.show();
     ImagePlus.addImageListener(this);
-    buildOverlay();
     buildUI();
   }
 
@@ -122,12 +140,12 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     this.repeatValuesButton.setEnabled(false);
     
     //saca el cursos
-    for (int i = 0; i < 9; i++) {
+    for (int i = 0; i < tamanooffset*tamanooffset; i++) {
       tfQuadrant[i].transferFocus();
     }
     
     //desactiva/activa los textField y cambia los valores segun el frame
-    for (int i = 0; i < 9; i++) {
+    for (int i = 0; i < tamanooffset*tamanooffset; i++) {
         tfQuadrant[i].setEnabled(frameEnabled[slice - 1]);
         tfQuadrant[i].setText("" + offset[slice - 1][i]);
       }
@@ -135,20 +153,29 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     if (true){
 
       int currentFrame = projectionsImage.getCurrentSlice() - 1;
-      for (int i = 0; i < 9; i++) {
+      for (int i = 0; i < tamanooffset*tamanooffset; i++) {
             tfQuadrant[i].setText("" + offset[currentFrame][i] );
       }
     }
   }
 
+  //private void buildOverlay() {
+ //   Overlay overlay = new Overlay();
+ //   drawLineInOverlay(overlay, width / 3, 0, width / 3, height);
+ //   drawLineInOverlay(overlay, 2 * width / 3, 0, 2 * width / 3, height);
+ //   drawLineInOverlay(overlay, 0, height / 3, width, height / 3);
+ //   drawLineInOverlay(overlay, 0, 2 * height / 3, width, 2 * height / 3);
+ //   projectionsImage.setOverlay(overlay);
+ // }
   private void buildOverlay() {
-    Overlay overlay = new Overlay();
-    drawLineInOverlay(overlay, width / 3, 0, width / 3, height);
-    drawLineInOverlay(overlay, 2 * width / 3, 0, 2 * width / 3, height);
-    drawLineInOverlay(overlay, 0, height / 3, width, height / 3);
-    drawLineInOverlay(overlay, 0, 2 * height / 3, width, 2 * height / 3);
-    projectionsImage.setOverlay(overlay);
-  }
+	    Overlay overlay = new Overlay();
+	    for (int i = 0; i < tamanooffset-1; i++) {
+		    drawLineInOverlay(overlay, (i+1) * width / tamanooffset, 0, (i+1) * width / tamanooffset, height);
+		    drawLineInOverlay(overlay, 0, (i+1) * height / tamanooffset, width, (i+1) * height / tamanooffset);
+	    	
+	    }
+	    projectionsImage.setOverlay(overlay);
+	  }
 
   private void drawLineInOverlay(Overlay overlay, int x1, int y1, int x2, int y2) {
     Roi line = new Line(x1, y1, x2, y2);
@@ -156,23 +183,29 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     line.setStrokeWidth(1);
     overlay.add(line);
   }
+  
+  
 
   private void buildUI() {
-    tfQuadrant = new TextField[9];
+    tfQuadrant = new TextField[tamanooffset*tamanooffset];
     Panel container = new Panel();
     container.setLayout(new FlowLayout());
     Panel theNumbers = new Panel();
-    theNumbers.setLayout(new GridLayout(3, 3));
-    for (int i = 0; i < 9; i++) {
+    theNumbers.setLayout(new GridLayout(tamanooffset, tamanooffset));
+    for (int i = 0; i < tamanooffset*tamanooffset; i++) {
       tfQuadrant[i] = new TextField("" + offset[0][i]);
       tfQuadrant[i].setName("" + i);
       tfQuadrant[i].addKeyListener(this);
       tfQuadrant[i].addMouseListener(this);
       theNumbers.add(tfQuadrant[i]);
     }
-    this.frameEnabledCheckbox = new Checkbox("Use this frame for interpolation", frameEnabled[0]);
+    this.frameEnabledCheckbox = new Checkbox("Use this frame for interpolation                        ", frameEnabled[0]);
     this.frameEnabledCheckbox.addItemListener(this);
     
+    this.gridCheckbox = new Checkbox("Grid", gridEnabled[0]);
+    this.gridCheckbox.addItemListener(this);
+    
+
     CheckboxGroup choice = new CheckboxGroup();
     this.anteriorCheckbox = new Checkbox("Keep higher z", choice, keepAnteriorPart);
     this.anteriorCheckbox.addItemListener(this);
@@ -213,9 +246,22 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     copyMatrixButton   = new Button("Repeat matrix in all frames");
     copyMatrixButton.addActionListener(this);
     
-    Panel buttonsShortcuts = new Panel(new GridLayout(2, 1));
+    saveButton   = new Button("Save all matrices");
+    saveButton.addActionListener(this);
+    loadButton   = new Button("Load all matrices");
+    loadButton.addActionListener(this);
+    
+    Panel checkboxContainer = new Panel(new GridLayout(1, 2));
+    checkboxContainer.add(frameEnabledCheckbox);
+    checkboxContainer.add(gridCheckbox);
+
+    
+    Panel buttonsShortcuts = new Panel(new GridLayout(4, 1));
     buttonsShortcuts.add(repeatValuesButton);
     buttonsShortcuts.add(copyMatrixButton);
+    buttonsShortcuts.add(saveButton);
+    buttonsShortcuts.add(loadButton);
+    
     
     Panel labelsContainer = new Panel(new GridLayout(4, 1));
     labelsContainer.add(new Label("Modify Z  "));
@@ -228,11 +274,11 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     container.add(buttonsShortcuts);
     container.add(choiceContainer);
     container.add(buttonsContainer);
-
-    projectionsImage.getWindow().add(frameEnabledCheckbox);
+    
+    projectionsImage.getWindow().add(checkboxContainer);
     projectionsImage.getWindow().add(container);
     
-    String html="v1.8, by SCIAN-Lab 2022, Mauricio.Cerda@uchile.cl";
+    String html="v1.9, by SCIAN-Lab 2023, Mauricio.Cerda@uchile.cl";
    
     projectionsImage.getWindow().add( new Label(html) );
     projectionsImage.getWindow().pack();
@@ -241,17 +287,15 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
   @Override
   public void actionPerformed(ActionEvent e) {
 
-  
-   
-    
-    if (e.getSource() == previewButton) {
+	  
+	if (e.getSource() == previewButton) {
 
-      int sliceIndex = projectionsImage.getCurrentSlice();
-      projectionsImage.getStack().setProcessor(preview(sliceIndex,this.channelV).getProcessor(), sliceIndex);
-      projectionsImage.updateAndDraw();
-
-      
-    }
+	      int sliceIndex = projectionsImage.getCurrentSlice();
+	      projectionsImage.getStack().setProcessor(preview(sliceIndex,this.channelV).getProcessor(), sliceIndex);
+	      projectionsImage.updateAndDraw();
+	
+	      
+	    }
     else if (e.getSource() == ABCButton) {
       IJ.run("Brightness/Contrast...");
     
@@ -263,7 +307,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     else if (e.getSource() == repeatValuesButton) {
     	//toRepeatValue
     	int currentFrame = projectionsImage.getCurrentSlice() - 1;
-        for (int i = 0; i < 9; i++) {
+        for (int i = 0; i < tamanooffset*tamanooffset; i++) {
             offset[currentFrame][i] = toRepeatValue;
             tfQuadrant[i].setText("" + toRepeatValue );
         }
@@ -275,16 +319,93 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     	int currentFrame = projectionsImage.getCurrentSlice() - 1;
     	
         for (int frame = 0; frame < frames; frame++) {
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < tamanooffset*tamanooffset; i++) {
               offset[frame][i] = offset[currentFrame][i];
             }
           }
     }
+    else if ( e.getSource() == saveButton) {
+        Frame frame = new Frame("File Chooser Example");
+
+        FileDialog fileDialog = new FileDialog(frame, "Select File");
+        fileDialog.setMode(FileDialog.LOAD);
+        fileDialog.setVisible(true);
+
+        // Get the selected file
+        String filename = fileDialog.getFile();
+        
+
+
+    	try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
+            for (int[] row : offset) {
+                for (int num : row) {
+                    writer.print(num + " ");
+                }
+                writer.println();
+            }
+            System.out.println("Array written to file successfully!");
+
+            
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+    	
+    
+    else if ( e.getSource() == loadButton) {
+    	Frame frame = new Frame("File Chooser Example");
+
+        FileDialog fileDialog = new FileDialog(frame, "Select File");
+        fileDialog.setMode(FileDialog.LOAD);
+        fileDialog.setVisible(true);
+
+        // Get the selected file
+        String filename = fileDialog.getDirectory() + fileDialog.getFile();
+        int[][] twoDimensional = offset;
+
+        try {
+            FileReader fileReader = new FileReader(filename);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            
+            String line;
+            int framess= 0;
+           
+            while ((line = bufferedReader.readLine()) != null) {
+                String[] numbers = line.split(" ");
+                if (numbers.length != tamanooffset * tamanooffset) {
+                	GenericDialog gdp = new GenericDialog("The saved matrix does not match the selected size.");
+                	gdp.addMessage("The saved matrix does not match the selected size.");
+                	gdp.showDialog();
+
+                	break;
+                }
+                for (int k = 0; k < numbers.length; k++) {
+                    twoDimensional[framess][k] = Integer.parseInt(numbers[k]);
+                }
+                framess=framess+1;
+                System.out.println(numbers.length);
+
+            }
+            
+            bufferedReader.close();
+            offset=twoDimensional;
+            updateOffsets(1);
+            
+        } catch (IOException ee) {
+            ee.printStackTrace();
+        }     
+        
+        
+    
+    	
+    }
+	  
   }
   
   private ImagePlus preview(int frame, int selectedchannel) {
     int f = frame - 1;
     
+    /*
     double[] x1Data = { width / 6, width / 2, 5 * width / 6 };
     double[] x2Data = { height / 6, height / 2, 5 * height / 6 };
     double[][] yData = {
@@ -292,6 +413,22 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
       { offset[f][1], offset[f][4], offset[f][7] },
       { offset[f][2], offset[f][5], offset[f][8] }
     };
+    */
+    double[] x1Data = new double[tamanooffset];
+    double[] x2Data = new double[tamanooffset];
+
+    for (int i = 0; i < tamanooffset; i++) {
+    	x1Data[i] = (2 *width * i + 1) / (double) (2 * tamanooffset);
+    	x2Data[i] = (2 *height * i + 1) / (double) (2 * tamanooffset);
+
+    }
+    double[][] yData = new double[tamanooffset][tamanooffset];
+    for (int i = 0; i < tamanooffset; i++) {
+        for (int j = 0; j < tamanooffset; j++) {
+            yData[i][j] = offset[f][(j * tamanooffset) + i];
+        }
+    }
+    
     BiCubicSpline surface = new BiCubicSpline(x1Data, x2Data, yData);
     double[][] interps = new double[width][height];
     for (int i = 0; i < width; i++) {
@@ -364,7 +501,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
 
 	  ResultsTable table = new ResultsTable();
 
-	  for (int cuadrante = 0; cuadrante < 9; cuadrante++) {
+	  for (int cuadrante = 0; cuadrante < tamanooffset*tamanooffset; cuadrante++) {
 		  int frameInicioInterpolacion = 0;
 		  for (int frame = 1; frame < frames; frame++) {
 			  if (frameEnabled[frame]) {
@@ -397,12 +534,13 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
     //ImagePlus result2= result;
     result= HyperStackConverter.toHyperStack(result, result.getNChannels()*channel, result.getNSlices()/channel, result.getNFrames(),"xyzct","color");
     result.show();
-	  table.show("General Projection data");
+	  table.show("Spline Projection data");
   }
 
-  private void addRowToTable(ResultsTable table, int frame) {
+ /* private void addRowToTable(ResultsTable table, int frame) {
 	  table.incrementCounter();
 	  table.addValue("Frame", frame);
+	  
 	  table.addValue("Z11", offset[frame-1][0]);
 	  table.addValue("Z12", offset[frame-1][1]);
 	  table.addValue("Z13", offset[frame-1][2]);
@@ -415,6 +553,22 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
 	  table.addValue("Higher", ""+this.keepAnteriorPart);
     table.addValue("Interpolation", ""+frameEnabled[frame-1] );//Nueva columna
     table.addValue("Band", ""+ ancho*Boolean.compare(bandSelection, false) );//Nueva columna
+
+
+  }*/
+  private void addRowToTable(ResultsTable table, int frame) {
+	  table.incrementCounter();
+	  table.addValue("Frame", frame);
+      for (int i = 0; i < tamanooffset; i++) {
+    	  for (int j = 0; j < tamanooffset; j++) {
+    		  table.addValue("Z"+(i+1)+(j+1), offset[frame-1][i*tamanooffset+j]);
+    	  }
+    	      
+      }
+	  
+	  table.addValue("Higher", ""+this.keepAnteriorPart);
+	  table.addValue("Interpolation", ""+frameEnabled[frame-1] );//Nueva columna
+	  table.addValue("Band", ""+ ancho*Boolean.compare(bandSelection, false) );//Nueva columna
 
 
   }
@@ -475,7 +629,19 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
 
   @Override
   public void itemStateChanged(ItemEvent e) {
-    if (e.getSource() == anteriorCheckbox) {
+	  
+	  if (e.getSource() == gridCheckbox) {
+		  if (gridEnabled[0]== false) {
+			  buildOverlay();
+		  	  gridEnabled[0]= true;}
+		  else if (gridEnabled[0]== true) {
+			  Overlay overlay = new Overlay();
+			  projectionsImage.setOverlay(overlay);
+			  gridEnabled[0]= false;}
+	  
+	      
+	    }
+    else if (e.getSource() == anteriorCheckbox) {
       keepAnteriorPart = true;
       bandSelection= bandCheckbox.getState();
       this.anchoBanda.setEnabled(bandSelection);
@@ -504,7 +670,7 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
         return;
       }
       frameEnabled[currentFrame] = value;
-      for (int i = 0; i < 9; i++) {
+      for (int i = 0; i < tamanooffset*tamanooffset; i++) {
         tfQuadrant[i].setEnabled(value);
       }
       previewButton.setEnabled(value);
@@ -523,7 +689,9 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
 public void mouseClicked(MouseEvent e) {
 
     try {
-	toRepeatValue=Integer.parseInt( ((TextField)(e.getSource())).getText() );
+    	((TextField)(e.getSource())).selectAll();
+    	toRepeatValue=Integer.parseInt( ((TextField)(e.getSource())).getText() );
+    	
     }
     catch (Exception ex) {
     	toRepeatValue=slices;
