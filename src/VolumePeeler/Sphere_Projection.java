@@ -1,4 +1,4 @@
-package EpitheliumJ;
+package VolumePeeler;
 import ij.*;
 import ij.process.*;
 import ij.plugin.ZProjector;
@@ -16,7 +16,7 @@ import java.awt.Label; //revisar
 public class Sphere_Projection implements ExtendedPlugInFilter, DialogListener {
 
   private int FLAGS = STACK_REQUIRED | DOES_ALL;
-  private final static String PLUGIN_NAME = "EpitheliumJ.Sphere_Projection";
+  private final static String PLUGIN_NAME = "VolumePeeler.Sphere_Projection";
   
   private byte[] sourcePixels;
   private Point[] auxPointsArray;

@@ -1,4 +1,4 @@
-package EpitheliumJ;
+package VolumePeeler;
 /**********************************************************
 *
 *   Class CubicSpline

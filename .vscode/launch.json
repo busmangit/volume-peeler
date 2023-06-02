@@ -2,10 +2,10 @@
   "configurations": [
     {
       "type": "java",
-      "name": "Launch General_Projection",
+      "name": "Launch Spline_Projection",
       "request": "launch",
-      "mainClass": "EpitheliumJ.General_Projection",
-      "projectName": "epithelium-projection"
+      "mainClass": "volumePeeler.Spline_Projection",
+      "projectName": "volume-peeler"
     },
     {
       "type": "java",
