@@ -15,6 +15,7 @@ import java.io.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 
 
@@ -328,20 +329,21 @@ implements PlugInFilter, ActionListener, KeyListener, ItemListener, ImageListene
         Frame frame = new Frame("File Chooser Example");
 
         FileDialog fileDialog = new FileDialog(frame, "Select File");
-        fileDialog.setMode(FileDialog.LOAD);
+        fileDialog.setMode(FileDialog.SAVE);
         fileDialog.setVisible(true);
 
         // Get the selected file
-        String filename = fileDialog.getFile();
-        
+        String filename = fileDialog.getDirectory() + fileDialog.getFile();
 
 
     	try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
             for (int[] row : offset) {
                 for (int num : row) {
                     writer.print(num + " ");
+
                 }
                 writer.println();
+
             }
             System.out.println("Array written to file successfully!");
 
